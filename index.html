@@ -1154,6 +1154,14 @@ function loadData() {
     // Load cloud settings from separate key (never lost on data import)
     const cs = localStorage.getItem('proyak_cloud');
     if(cs) { const c=JSON.parse(cs); DB.cloudKey=c.key; DB.cloudBin=c.bin; }
+    // Load partes data
+    const ps = localStorage.getItem('proyak_partes');
+    if(ps) {
+      const p = JSON.parse(ps);
+      partesData = p.data || {};
+      const fnEl = document.getElementById('partes-filename');
+      if(fnEl && p.file) fnEl.textContent = p.file + ' (cargado)';
+    }
   } catch(e) {
     DB.projects = [];
     DB.preventa = [];
@@ -2366,6 +2374,7 @@ function importPartes(input) {
         entries.forEach(e => { porConsultor[e.consultor] = (porConsultor[e.consultor] || 0) + e.cantidad; });
         partesData[sheetName.trim().toUpperCase()] = { nombre: projectName, total, entries, porConsultor };
       });
+      localStorage.setItem('proyak_partes', JSON.stringify({ data: partesData, file: file.name, date: new Date().toISOString() }));
       document.getElementById('partes-filename').textContent = file.name;
       renderPartes();
       renderTable();
