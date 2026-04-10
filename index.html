@@ -1051,17 +1051,24 @@ function handleImport(e) {
   const file = e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = ev => {
+  reader.onload = async ev => {
     try {
       const data = JSON.parse(ev.target.result);
-      if(data.projects) {
-        DB = data;
-        saveData(false);
-        renderAll();
-        showToast('⬆ Datos importados correctamente');
-      } else {
-        showToast('❌ Fichero no válido');
+      if(!data.projects) { showToast('❌ Fichero no válido'); return; }
+      DB = data;
+      // Persistir credenciales de nube del JSON por separado
+      if(DB.cloudKey) {
+        localStorage.setItem('proyak_cloud', JSON.stringify({key: DB.cloudKey, bin: DB.cloudBin||''}));
       }
+      localStorage.setItem('proyak_v1', JSON.stringify(DB));
+      renderAll();
+      showToast('⬆ Datos importados');
+      // Si hay nube, comprobar primero si tiene versión más reciente
+      if(DB.cloudKey && DB.cloudBin) {
+        await pullFromCloud(true);
+      }
+      // Guardar y subir a nube el estado actual (el que ganó)
+      saveData(false);
     } catch(err) { showToast('❌ Error al leer el fichero'); }
   };
   reader.readAsText(file);
