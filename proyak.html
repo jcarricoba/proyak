@@ -284,6 +284,24 @@ a { color: var(--primary); }
 .partes-upload-zone { border:2px dashed var(--border); border-radius:12px; padding:40px; text-align:center; margin-bottom:24px; cursor:pointer; transition:border-color .2s; }
 .partes-upload-zone:hover { border-color:var(--primary); }
 .partes-pct { font-size:12px; margin-left:8px; }
+
+/* ===== HELP MODAL ===== */
+.help-modal { max-width:680px; width:96vw; max-height:88vh; display:flex; flex-direction:column; }
+.help-body { overflow-y:auto; padding:0 28px 24px; flex:1; }
+.help-section { margin-bottom:28px; }
+.help-section h3 { font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--primary); margin:0 0 12px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+.help-step { display:flex; gap:12px; margin-bottom:10px; font-size:13px; line-height:1.6; }
+.help-num { flex-shrink:0; width:22px; height:22px; border-radius:50%; background:var(--primary); color:#fff; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; margin-top:1px; }
+.help-faq { margin-bottom:12px; font-size:13px; }
+.help-faq summary { cursor:pointer; font-weight:600; padding:6px 0; color:rgba(255,255,255,.85); list-style:none; display:flex; align-items:center; gap:6px; }
+.help-faq summary::before { content:'▶'; font-size:9px; color:var(--muted); transition:transform .15s; }
+.help-faq[open] summary::before { transform:rotate(90deg); }
+.help-faq p { margin:6px 0 0 18px; color:var(--muted); line-height:1.7; }
+.help-badge { display:inline-block; padding:1px 7px; border-radius:4px; font-size:11px; font-weight:700; margin:0 2px; }
+.help-badge.verde { background:rgba(34,197,94,.2); color:#4ade80; }
+.help-badge.amarillo { background:rgba(234,179,8,.2); color:#facc15; }
+.help-badge.naranja { background:rgba(249,115,22,.2); color:#fb923c; }
+.help-badge.rojo { background:rgba(239,68,68,.2); color:#f87171; }
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -316,6 +334,7 @@ a { color: var(--primary); }
   <button class="header-btn hbtn-ghost" onclick="importData()" title="Importar datos JSON">⬆ Importar</button>
   <button class="header-btn hbtn-ghost" onclick="exportData()" title="Exportar datos JSON">⬇ Exportar</button>
   <button class="header-btn hbtn-ghost" id="btn-force-cloud" onclick="forceSaveToCloud()" title="Forzar guardado en nube ahora" style="display:none">☁ Guardar</button>
+  <button class="header-btn hbtn-ghost" onclick="openHelpModal()" title="Ayuda y FAQ">? Ayuda</button>
   <button class="header-btn hbtn-ghost" onclick="openSettingsModal()" title="Ajustes y nube">⚙ Ajustes</button>
   <button class="header-btn hbtn-primary" onclick="openProjectModal(null)">＋ Proyecto</button>
 </div>
@@ -904,6 +923,91 @@ a { color: var(--primary); }
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('conv-modal')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveConversion()">🚀 Crear proyecto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: AYUDA ===== -->
+<div class="overlay hidden" id="help-modal" onclick="closeModal('help-modal')">
+  <div class="modal help-modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title">? Ayuda y FAQ</span>
+      <button class="modal-close" onclick="closeModal('help-modal')">✕</button>
+    </div>
+    <div class="help-body">
+
+      <div class="help-section">
+        <h3>Dar de alta un proyecto</h3>
+        <div class="help-step"><div class="help-num">1</div><div>Pulsa <strong>+ Proyecto</strong> en la cabecera para abrir el formulario.</div></div>
+        <div class="help-step"><div class="help-num">2</div><div>Rellena los campos obligatorios: <strong>Cliente</strong> y <strong>Nombre del proyecto</strong>.</div></div>
+        <div class="help-step"><div class="help-num">3</div><div>Elige el <strong>Estado</strong> inicial, el <strong>Area</strong> y el <strong>Responsable</strong>.</div></div>
+        <div class="help-step"><div class="help-num">4</div><div>Introduce las <strong>Jornadas estimadas</strong> y las fechas de inicio y fin.</div></div>
+        <div class="help-step"><div class="help-num">5</div><div>Opcional: define el presupuesto por perfiles con el boton <strong>Editar presupuesto</strong>, y añade URLs de seguimiento, oferta o plan.</div></div>
+        <div class="help-step"><div class="help-num">6</div><div>Si usas partes de trabajo, anota el <strong>Codigo de proyecto</strong> (ej. PRO-0145-01) para vincularlo automaticamente.</div></div>
+        <div class="help-step"><div class="help-num">7</div><div>Guarda. El proyecto aparece en el Portfolio y los KPIs se actualizan al momento.</div></div>
+      </div>
+
+      <div class="help-section">
+        <h3>Mantener un proyecto</h3>
+        <div class="help-step"><div class="help-num">1</div><div>Haz clic en cualquier fila del portfolio para <strong>expandirla</strong> y ver el detalle completo.</div></div>
+        <div class="help-step"><div class="help-num">2</div><div>Pulsa el icono de edicion para actualizar el <strong>% de progreso</strong> y las <strong>jornadas consumidas</strong> manualmente, o importa los partes para que se calculen solos.</div></div>
+        <div class="help-step"><div class="help-num">3</div><div>Cambia el <strong>estado</strong> directamente haciendo clic en el punto de color de la fila.</div></div>
+        <div class="help-step"><div class="help-num">4</div><div>Cuando el proyecto termine, usa <strong>Archivar</strong> para moverlo al Historico con las jornadas reales y lecciones aprendidas.</div></div>
+      </div>
+
+      <div class="help-section">
+        <h3>Estados del proyecto</h3>
+        <div style="font-size:13px;line-height:2">
+          <span class="help-badge verde">Dentro del plan</span> Todo correcto, avanza segun lo previsto.<br>
+          <span class="help-badge amarillo">Planificado</span> En preparacion o pendiente de arrancar.<br>
+          <span class="help-badge naranja">Bloqueado</span> Hay un impedimento que impide avanzar.<br>
+          <span class="help-badge rojo">Fuera del plan</span> Desviacion significativa en plazo o alcance.
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Partes de trabajo</h3>
+        <div class="help-step"><div class="help-num">1</div><div>Exporta el Excel de partes desde la app interna de gestion de horas.</div></div>
+        <div class="help-step"><div class="help-num">2</div><div>Ve a la pestana <strong>Partes</strong> y pulsa <strong>Importar Excel</strong>.</div></div>
+        <div class="help-step"><div class="help-num">3</div><div>En la ficha de cada proyecto, escribe el <strong>Codigo de proyecto</strong> que aparece como nombre de hoja en el Excel (ej. PRO-0145-01).</div></div>
+        <div class="help-step"><div class="help-num">4</div><div>Las horas consumidas del portfolio se actualizan automaticamente desde los partes. Aparece el icono 📋 en la columna de jornadas cuando el dato viene de partes.</div></div>
+        <div class="help-step"><div class="help-num">5</div><div>Los partes se mantienen en memoria: hay que reimportarlos si recargas la pagina.</div></div>
+      </div>
+
+      <div class="help-section">
+        <h3>Preguntas frecuentes</h3>
+
+        <details class="help-faq" open>
+          <summary>Como cambio entre jornadas y horas?</summary>
+          <p>Pulsa el boton <strong>Jornadas / Horas</strong> en la cabecera. Todos los valores del portfolio se convierten automaticamente usando el factor configurado en Ajustes (por defecto 8 h/jornada).</p>
+        </details>
+
+        <details class="help-faq" open>
+          <summary>Donde se guardan los datos?</summary>
+          <p>En el <strong>localStorage</strong> de tu navegador. Los datos no salen de tu equipo salvo que configures la sincronizacion en la nube (JSONBin) desde Ajustes. Exporta regularmente en JSON como copia de seguridad.</p>
+        </details>
+
+        <details class="help-faq" open>
+          <summary>Puedo tener varios espacios de trabajo?</summary>
+          <p>Si. Usa <strong>Exportar</strong> para guardar el estado actual como fichero JSON, carga otro fichero con <strong>Importar</strong>, y cambia el nombre del workspace en la cabecera. Cada fichero JSON es un workspace independiente.</p>
+        </details>
+
+        <details class="help-faq" open>
+          <summary>Como funciona el presupuesto?</summary>
+          <p>Dentro de la ficha de proyecto, pulsa <strong>Editar presupuesto</strong> para añadir lineas por perfil (ej. 3 jornadas de Consultor Senior a 95 €/h). El coste estimado y el margen se calculan solos y aparecen en el portfolio.</p>
+        </details>
+
+        <details class="help-faq" open>
+          <summary>Que pasa si borro el navegador o cambio de equipo?</summary>
+          <p>Perderas los datos si no has exportado ni activado la nube. Exporta el JSON periodicamente o configura JSONBin en Ajustes para tener una copia accesible desde cualquier sitio.</p>
+        </details>
+
+        <details class="help-faq" open>
+          <summary>Como añado un stakeholder o documento a un proyecto?</summary>
+          <p>Edita el proyecto y ve a las pestanas <strong>Stakeholders</strong> o <strong>Documentos</strong> dentro del formulario. Puedes añadir contactos con rol, email y telefono, y enlazar documentos con URL.</p>
+        </details>
+      </div>
+
     </div>
   </div>
 </div>
@@ -2153,6 +2257,12 @@ async function testCloudSync() {
 }
 
 // ============================================================
+// HELP MODAL
+// ============================================================
+function openHelpModal() {
+  document.getElementById('help-modal').classList.remove('hidden');
+}
+
 // SETTINGS MODAL
 // ============================================================
 function openSettingsModal() {
