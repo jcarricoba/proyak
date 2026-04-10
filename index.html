@@ -1055,19 +1055,45 @@ function handleImport(e) {
     try {
       const data = JSON.parse(ev.target.result);
       if(!data.projects) { showToast('❌ Fichero no válido'); return; }
-      DB = data;
-      // Persistir credenciales de nube del JSON por separado
-      if(DB.cloudKey) {
-        localStorage.setItem('proyak_cloud', JSON.stringify({key: DB.cloudKey, bin: DB.cloudBin||''}));
+
+      // Credenciales: del JSON primero, si no del localStorage (sesión previa)
+      let cloudKey = data.cloudKey;
+      let cloudBin = data.cloudBin;
+      if(!cloudKey) {
+        try { const cs = JSON.parse(localStorage.getItem('proyak_cloud')||'{}'); cloudKey = cs.key; cloudBin = cs.bin; } catch(e) {}
       }
+
+      // Cargar datos del JSON como base
+      DB = { ...data, cloudKey, cloudBin };
+      if(cloudKey) localStorage.setItem('proyak_cloud', JSON.stringify({key: cloudKey, bin: cloudBin||''}));
       localStorage.setItem('proyak_v1', JSON.stringify(DB));
       renderAll();
       showToast('⬆ Datos importados');
-      // Si hay nube, comprobar primero si tiene versión más reciente
-      if(DB.cloudKey && DB.cloudBin) {
-        await pullFromCloud(true);
+
+      // Si hay nube: SIEMPRE cargar desde ella (es la fuente de verdad, no comparar fechas)
+      if(cloudKey && cloudBin) {
+        try {
+          showToast('☁ Conectando con la nube...');
+          const res = await fetch(`https://api.jsonbin.io/v3/b/${cloudBin}/latest`, {
+            headers: { 'X-Master-Key': cloudKey }
+          });
+          if(res.ok) {
+            const result = await res.json();
+            const remote = result.record;
+            if(remote && remote.projects) {
+              DB = { ...remote, cloudKey, cloudBin };
+              localStorage.setItem('proyak_v1', JSON.stringify(DB));
+              renderAll();
+              showToast('☁ Datos cargados desde la nube');
+            }
+          } else {
+            showToast('⚠ Nube no disponible ('+res.status+'), usando datos del JSON');
+          }
+        } catch(err) {
+          showToast('⚠ Error de red, usando datos del JSON');
+        }
       }
-      // Guardar y subir a nube el estado actual (el que ganó)
+
       saveData(false);
     } catch(err) { showToast('❌ Error al leer el fichero'); }
   };
