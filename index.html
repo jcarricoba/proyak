@@ -1452,7 +1452,11 @@ function renderTable() {
   tbody.innerHTML = '';
 
   if(!projs.length) {
-    tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><div class="es-icon">📭</div><p>No hay proyectos con estos filtros</p></div></td></tr>`;
+    const noProjects = DB.projects.length === 0;
+    const emptyHtml = noProjects
+      ? `<div class="es-icon">🚀</div><p style="margin-bottom:14px">Aún no tienes ningún proyecto</p><button class="btn btn-primary" onclick="openProjectModal(null)">＋ Crear primer proyecto</button>`
+      : `<div class="es-icon">📭</div><p>No hay proyectos con estos filtros</p>`;
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state">${emptyHtml}</div></td></tr>`;
     return;
   }
 
