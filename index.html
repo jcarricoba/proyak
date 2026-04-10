@@ -1400,12 +1400,12 @@ function renderTable() {
   projs.forEach(p => {
     const est = ESTADOS[p.estado] || ESTADOS.verde;
     const isExpanded = expandedRows.has(p.id);
-    const prog = +p.progreso || 0;
-    const pbCls = prog >= 100 ? 'pb-over' : prog >= 80 ? 'pb-warn' : 'pb-ok';
     const jEst = +p.jornadasEst || 0;
     const partesHoras = p.codigoProyecto && partesData[p.codigoProyecto] ? partesData[p.codigoProyecto].total : null;
     const hpj2 = DB.horasPorJornada || 8;
     const jCons = partesHoras !== null ? partesHoras / hpj2 : (+p.jornadasCons || 0);
+    const prog = partesHoras !== null && jEst > 0 ? Math.min(100, Math.round(jCons / jEst * 100)) : (+p.progreso || 0);
+    const pbCls = prog >= 100 ? 'pb-over' : prog >= 80 ? 'pb-warn' : 'pb-ok';
     const fromPartes = partesHoras !== null;
     const jPct = jEst > 0 ? ((jCons/jEst)*100).toFixed(0)+'%' : '–';
     const respInitials = (p.responsable||'?').substring(0,3).toUpperCase();
