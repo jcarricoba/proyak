@@ -2437,11 +2437,20 @@ function parsePartesPorProyecto(wb) {
 }
 
 function parseControlHoras(wb) {
-  // Formato: una hoja por mes, cabeceras dinámicas.
-  // Solo proyectos PRO-* y tipos 0.H.NORMAL / 1.H.IT
+  // Formato: una hoja por mes. Solo PRO-* y tipos 0.H.NORMAL / 1.H.IT
   const TIPO_OK = new Set(['0.H.NORMAL', '1.H.IT']);
-  const norm = s => String(s||'').toUpperCase().replace(/\s+/g,'');
+  // Normaliza: mayúsculas + sin espacios + sin acentos
+  const norm = s => String(s||'').toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,'');
   const findCol = (headers, ...terms) => headers.findIndex(h => terms.some(t => norm(h).includes(norm(t))));
+
+  const addRow = (result, key, nombre, ln, cons, fecha, horas) => {
+    if(!result[key]) result[key] = { nombre, total: 0, entries: [], porConsultor: {}, ln };
+    result[key].total += horas;
+    result[key].entries.push({ fecha, consultor: cons, cantidad: horas, descripcion: '' });
+    result[key].porConsultor[cons] = (result[key].porConsultor[cons] || 0) + horas;
+  };
 
   const result = {};
   wb.SheetNames
@@ -2450,51 +2459,75 @@ function parseControlHoras(wb) {
       const ws = wb.Sheets[sheetName];
       const matrix = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
 
-      // Localizar fila de cabecera (contiene CONSULTOR y CODIGO)
+      // Buscar fila de cabecera (contiene CONSULTOR y CODIGO, con normalización de acentos)
       let headerIdx = -1;
       for(let i = 0; i < Math.min(matrix.length, 12); i++) {
         const r = matrix[i] || [];
-        if(r.some(c => norm(c).includes('CONSULTOR')) && r.some(c => norm(c).includes('CODIGO'))) {
+        if(r.some(c => norm(c).includes('CONSULTOR')) && r.some(c => norm(c).includes('CODIGO') || norm(c).includes('COD'))) {
           headerIdx = i; break;
         }
       }
-      if(headerIdx === -1) return;
 
-      const headers = matrix[headerIdx] || [];
-      const iCons    = findCol(headers, 'CONSULTOR', 'EMPLEADO', 'RECURSO');
-      const iFecha   = findCol(headers, 'FECHA', 'DIA', 'DATE');
-      const iCodigo  = findCol(headers, 'CODIGO', 'CÓDIGO', 'COD');
-      const iProyecto= findCol(headers, 'PROYECTO', 'NOMBREPROYECTO');
-      const iHoras   = findCol(headers, 'HORAS', 'HORA');
-      const iTipo    = findCol(headers, 'TIPODEHORAS', 'TIPOHORAS', 'TIPO');
-      const iLN      = findCol(headers, 'LNPROY', 'LNPROYECTO', 'LINEANEGOCIOPROYECTO', 'LN');
-      if(iCons === -1 || iCodigo === -1 || iHoras === -1) return;
+      if(headerIdx !== -1) {
+        // --- Modo cabecera dinámica ---
+        const headers = matrix[headerIdx] || [];
+        const iCons    = findCol(headers, 'CONSULTOR', 'EMPLEADO', 'RECURSO');
+        const iFecha   = findCol(headers, 'FECHA', 'DIA', 'DATE');
+        const iCodigo  = findCol(headers, 'CODIGO', 'COD');
+        const iProyecto= findCol(headers, 'PROYECTO', 'NOMBREPROYECTO');
+        const iHoras   = findCol(headers, 'HORAS', 'HORA');
+        const iTipo    = findCol(headers, 'TIPODEHORAS', 'TIPOHORAS', 'TIPO');
+        const iLN      = findCol(headers, 'LNPROY', 'LNPROYECTO', 'LINEANEGOCIOPROYECTO', 'LN');
+        if(iCons === -1 || iCodigo === -1 || iHoras === -1) return;
 
-      for(let i = headerIdx + 1; i < matrix.length; i++) {
-        const row = matrix[i];
-        if(!row) continue;
-        const consultor = row[iCons];
-        const codigo    = row[iCodigo];
-        const horas     = parseFloat(row[iHoras]);
-        if(!consultor || !codigo || isNaN(horas) || horas <= 0) continue;
-
-        const key = String(codigo).trim().toUpperCase();
-        if(!key.startsWith('PRO')) continue;
-
-        const tipo = iTipo !== -1 ? String(row[iTipo]||'').trim() : '';
-        if(tipo && !TIPO_OK.has(tipo)) continue;
-
-        const rawFecha = iFecha !== -1 ? row[iFecha] : null;
-        const fecha = rawFecha instanceof Date ? rawFecha.toLocaleDateString('es-ES') : (rawFecha ? String(rawFecha) : '');
-        const cons = String(consultor).trim();
-        const nombre = iProyecto !== -1 && row[iProyecto] ? String(row[iProyecto]).trim() : key;
-        const ln = iLN !== -1 && row[iLN] ? String(row[iLN]).trim().toUpperCase() : '';
-        if(!result[key]) result[key] = { nombre, total: 0, entries: [], porConsultor: {}, ln };
-        result[key].total += horas;
-        result[key].entries.push({ fecha, consultor: cons, cantidad: horas, descripcion: '' });
-        result[key].porConsultor[cons] = (result[key].porConsultor[cons] || 0) + horas;
+        for(let i = headerIdx + 1; i < matrix.length; i++) {
+          const row = matrix[i];
+          if(!row) continue;
+          const consultor = row[iCons];
+          const codigo    = row[iCodigo];
+          const horas     = parseFloat(row[iHoras]);
+          if(!consultor || !codigo || isNaN(horas) || horas <= 0) continue;
+          const key = String(codigo).trim().toUpperCase();
+          if(!key.startsWith('PRO')) continue;
+          const tipo = iTipo !== -1 ? String(row[iTipo]||'').trim() : '';
+          if(tipo && !TIPO_OK.has(tipo)) continue;
+          const rawFecha = iFecha !== -1 ? row[iFecha] : null;
+          const fecha = rawFecha instanceof Date ? rawFecha.toLocaleDateString('es-ES') : (rawFecha ? String(rawFecha) : '');
+          const cons = String(consultor).trim();
+          const nombre = iProyecto !== -1 && row[iProyecto] ? String(row[iProyecto]).trim() : key;
+          const ln = iLN !== -1 && row[iLN] ? String(row[iLN]).trim().toUpperCase() : '';
+          addRow(result, key, nombre, ln, cons, fecha, horas);
+        }
+      } else {
+        // --- Fallback: índices fijos (formato original conocido) ---
+        // col 2=consultor, 3=fecha, 4=codigo, 5=proyecto, 10=horas, 6=lnProy
+        for(let i = 4; i < matrix.length; i++) {
+          const row = matrix[i];
+          if(!row) continue;
+          const consultor = row[2];
+          const rawFecha  = row[3];
+          const codigo    = row[4];
+          const proyecto  = row[5];
+          const horas     = parseFloat(row[10]);
+          if(!consultor || !codigo || isNaN(horas) || horas <= 0) continue;
+          const key = String(codigo).trim().toUpperCase();
+          if(!key.startsWith('PRO')) continue;
+          // Buscar tipo en columnas 6-13
+          let tipo = '';
+          for(let c = 6; c <= 13; c++) {
+            const v = String(row[c]||'').trim();
+            if(v.match(/^\d+\.H\./)) { tipo = v; break; }
+          }
+          if(tipo && !TIPO_OK.has(tipo)) continue;
+          const fecha = rawFecha instanceof Date ? rawFecha.toLocaleDateString('es-ES') : (rawFecha ? String(rawFecha) : '');
+          const cons = String(consultor).trim();
+          const nombre = proyecto ? String(proyecto).trim() : key;
+          const ln = row[6] && !String(row[6]).match(/^\d+\.H\./) ? String(row[6]).trim().toUpperCase() : '';
+          addRow(result, key, nombre, ln, cons, fecha, horas);
+        }
       }
     });
+
   return result;
 }
 
