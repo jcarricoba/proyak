@@ -2208,9 +2208,15 @@ async function pushToCloud() {
 
 async function forceSaveToCloud() {
   if(!DB.cloudKey) { showToast('⚠ Configura la nube en Ajustes primero'); return; }
+  const también = confirm(
+    '☁ Guardar en la nube\n\n' +
+    'Se enviará una copia de tus datos a JSONBin ahora mismo.\n\n' +
+    '¿Quieres exportar también una copia local (JSON) como respaldo?'
+  );
   clearTimeout(cloudSyncTimer);
   setCloudBar('pending', '☁ Guardando...');
   await pushToCloud();
+  if(también) exportData();
 }
 
 async function pullFromCloud(silent=false) {
