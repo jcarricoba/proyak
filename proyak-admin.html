@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proyak Admin</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; background: #111827; color: #f9fafb; font-size: 13px; min-height: 100vh; }
+.header { background: #0d1117; padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 16px; }
+.logo { font-size: 16px; font-weight: 800; color: #60a5fa; }
+.sep { flex: 1; }
+.main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.card { background: #1f2937; border: 1px solid #374151; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+.kpi-row { display: flex; gap: 12px; margin-bottom: 20px; }
+.kpi { background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 14px 18px; flex: 1; }
+.kpi-val { font-size: 24px; font-weight: 800; color: #60a5fa; }
+.kpi-label { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; border-bottom: 1px solid #374151; }
+td { padding: 10px 12px; border-bottom: 1px solid #1f2937; font-size: 12px; }
+tr:hover td { background: rgba(255,255,255,.03); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+.badge-ok { background: rgba(52,211,153,.15); color: #34d399; }
+.btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; }
+.btn-primary { background: #60a5fa; color: #fff; }
+.btn-ghost { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8); }
+#login-screen { display: flex; align-items: center; justify-content: center; min-height: 80vh; flex-direction: column; gap: 16px; }
+#admin-screen { display: none; }
+.user-info { font-size: 12px; color: #9ca3af; display: flex; align-items: center; gap: 8px; }
+.user-info img { border-radius: 50%; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">Proyak Admin</div>
+  <div class="sep"></div>
+  <div class="user-info" id="user-info" style="display:none">
+    <img id="admin-avatar" width="24" height="24">
+    <span id="admin-email"></span>
+    <button class="btn btn-ghost" onclick="doSignOut()">Salir</button>
+  </div>
+</div>
+
+<div class="main">
+  <div id="login-screen">
+    <div style="font-size:32px">🔐</div>
+    <div style="font-size:18px;font-weight:700">Proyak Admin</div>
+    <div style="color:#9ca3af;margin-bottom:8px">Acceso restringido a administradores</div>
+    <button class="btn btn-primary" onclick="doSignIn()">🔑 Entrar con Google</button>
+    <div id="login-error" style="color:#f87171;font-size:12px;display:none"></div>
+  </div>
+
+  <div id="admin-screen">
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-val" id="k-users">-</div><div class="kpi-label">Usuarios registrados</div></div>
+      <div class="kpi"><div class="kpi-val" id="k-active">-</div><div class="kpi-label">Activos últimos 7 días</div></div>
+      <div class="kpi"><div class="kpi-val" id="k-projects">-</div><div class="kpi-label">Proyectos totales</div></div>
+      <div class="kpi"><div class="kpi-val" id="k-preventa">-</div><div class="kpi-label">Prospectos totales</div></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-weight:700">Usuarios</div>
+        <button class="btn btn-ghost" onclick="loadUsers()">↻ Actualizar</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Workspace</th>
+            <th>Proyectos</th>
+            <th>Prospectos</th>
+            <th>Último guardado</th>
+          </tr>
+        </thead>
+        <tbody id="users-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+// ADMIN UIDs — add your UID here after first login (check browser console)
+const ADMIN_UIDS = [];
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB0F-USdHU_KgrsahqdjqZRY8tsmr84JZo",
+  authDomain: "proyak-845c5.firebaseapp.com",
+  projectId: "proyak-845c5",
+  storageBucket: "proyak-845c5.firebasestorage.app",
+  messagingSenderId: "388705316962",
+  appId: "1:388705316962:web:0fa5c923d6c78ee903213b"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+window.doSignIn = () => signInWithPopup(auth, provider).catch(e => {
+  document.getElementById('login-error').textContent = e.message;
+  document.getElementById('login-error').style.display = '';
+});
+window.doSignOut = () => signOut(auth);
+
+window.loadUsers = async function() {
+  const tbody = document.getElementById('users-table');
+  tbody.innerHTML = '<tr><td colspan="5" style="color:#9ca3af;padding:20px">Cargando...</td></tr>';
+
+  try {
+    const usersSnap = await getDocs(collection(db, 'users'));
+
+    const rows = [];
+    let totalProjects = 0, totalPreventa = 0, activeCount = 0;
+    const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000);
+
+    for (const userDoc of usersSnap.docs) {
+      const uid = userDoc.id;
+      const dataDoc = await getDoc(doc(db, 'users', uid, 'workspace', 'data'));
+      const data = dataDoc.exists() ? dataDoc.data() : {};
+      const projects = (data.projects||[]).length;
+      const preventa = (data.preventa||[]).length;
+      const lastSaved = data.lastSaved ? new Date(data.lastSaved) : null;
+      const isActive = lastSaved && lastSaved > sevenDaysAgo;
+      totalProjects += projects;
+      totalPreventa += preventa;
+      if (isActive) activeCount++;
+      rows.push({ uid, workspace: data.workspace||'—', projects, preventa, lastSaved, isActive });
+    }
+
+    document.getElementById('k-users').textContent = rows.length;
+    document.getElementById('k-active').textContent = activeCount;
+    document.getElementById('k-projects').textContent = totalProjects;
+    document.getElementById('k-preventa').textContent = totalPreventa;
+
+    tbody.innerHTML = rows.length === 0
+      ? '<tr><td colspan="5" style="color:#9ca3af;padding:20px">Sin usuarios todavía</td></tr>'
+      : rows.map(r => `
+        <tr>
+          <td style="font-family:monospace;font-size:10px;color:#6b7280">${r.uid.slice(0,12)}...</td>
+          <td style="font-weight:600">${r.workspace}</td>
+          <td>${r.projects}</td>
+          <td>${r.preventa}</td>
+          <td>${r.isActive ? '<span class="badge badge-ok">Activo</span> ' : ''}${r.lastSaved ? r.lastSaved.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—'}</td>
+        </tr>`).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:#f87171">Error: ${e.message}</td></tr>`;
+  }
+};
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    console.log('Tu UID de admin:', user.uid);
+    if (ADMIN_UIDS.length > 0 && !ADMIN_UIDS.includes(user.uid)) {
+      signOut(auth);
+      document.getElementById('login-error').textContent = 'Acceso denegado — no eres administrador';
+      document.getElementById('login-error').style.display = '';
+      return;
+    }
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = '';
+    document.getElementById('user-info').style.display = 'flex';
+    document.getElementById('admin-email').textContent = user.displayName || user.email;
+    if (user.photoURL) document.getElementById('admin-avatar').src = user.photoURL;
+    loadUsers();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('admin-screen').style.display = 'none';
+    document.getElementById('user-info').style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>

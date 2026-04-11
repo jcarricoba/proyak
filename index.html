@@ -363,7 +363,12 @@ a { color: var(--primary); }
   <button class="header-btn hbtn-ghost" onclick="downloadTemplate('gantt')" title="Plantilla Excel Gantt">📥 Gantt</button>
   <button class="header-btn hbtn-ghost" onclick="importData()" title="Importar datos JSON">⬆ Importar</button>
   <button class="header-btn hbtn-ghost" onclick="exportData()" title="Exportar datos JSON">⬇ Exportar</button>
-  <button class="header-btn hbtn-ghost" id="btn-force-cloud" onclick="forceSaveToCloud()" title="Forzar guardado en nube ahora" style="display:none">☁ Guardar</button>
+  <span id="user-badge" style="display:none;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.7)">
+    <img id="user-avatar" width="22" height="22" style="border-radius:50%">
+    <span id="user-email"></span>
+    <button class="header-btn hbtn-ghost" onclick="fbSignOut()">Salir</button>
+  </span>
+  <button class="header-btn hbtn-ghost" id="btn-login" onclick="fbSignIn()" style="display:none">🔑 Entrar</button>
   <button class="header-btn hbtn-ghost" onclick="openHelpModal()" title="Ayuda y FAQ">? Ayuda</button>
   <button class="header-btn hbtn-ghost" onclick="openSettingsModal()" title="Ajustes y nube">⚙ Ajustes</button>
   <button class="header-btn hbtn-primary" onclick="openProjectModal(null)">＋ Proyecto</button>
@@ -374,7 +379,7 @@ a { color: var(--primary); }
   <span>⚠</span>
   <span>Tus datos solo existen en este navegador. Haz una copia de seguridad para no perderlos.</span>
   <button onclick="exportData()" style="background:#f59e0b;color:#1c1917;border:none;border-radius:5px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">⬇ Exportar ahora</button>
-  <button onclick="openSettingsModal()" style="background:transparent;color:#fbbf24;border:1px solid #fbbf24;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer">☁ Activar sync</button>
+  <button onclick="fbSignIn()" style="background:transparent;color:#fbbf24;border:1px solid #fbbf24;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer">🔑 Iniciar sesión</button>
   <span style="flex:1"></span>
   <button onclick="dismissBackupBanner()" style="background:transparent;border:none;color:#fef3c7;font-size:16px;cursor:pointer;line-height:1">✕</button>
 </div>
@@ -790,34 +795,6 @@ a { color: var(--primary); }
     </div>
     <div class="modal-body">
       <div class="form-group" style="margin-bottom:16px">
-        <label class="form-label">☁ Sincronización JSONBin.io</label>
-        <div style="background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.2);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px">
-          <strong style="color:var(--text)">Pasos para configurar la nube:</strong><br>
-          1. Ve a <a href="https://jsonbin.io" target="_blank" style="color:var(--primary)">jsonbin.io</a> → regístrate gratis<br>
-          2. En tu perfil → <strong>API Keys</strong> → copia la <strong>Master Key</strong> (empieza por <code>$2a$10$</code>)<br>
-          3. En <strong>Bins</strong> → crea un bin nuevo (New Bin) → copia el <strong>BIN ID</strong> (cadena hexadecimal)<br>
-          4. Pega ambos aquí y pulsa "Probar"
-        </div>
-        <div class="form-grid" style="margin-top:8px">
-          <div class="form-group full">
-            <label class="form-label">API Key (Master Key)</label>
-            <input class="form-input" id="set-apikey" placeholder="$2a$10$AbCdEfGh..." type="password" autocomplete="off">
-            <span class="form-hint">Empieza siempre por $2a$10$ — cópiala completa</span>
-          </div>
-          <div class="form-group full">
-            <label class="form-label">Bin ID</label>
-            <input class="form-input" id="set-binid" placeholder="67a1b2c3d4e5f60123456789">
-            <span class="form-hint">ID hexadecimal del bin — se crea en jsonbin.io → Bins → New Bin</span>
-          </div>
-        </div>
-        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-secondary btn-sm" onclick="testCloudSync()">🔍 Probar conexión</button>
-          <button class="btn btn-secondary btn-sm" onclick="pullFromCloud()">⬇ Cargar desde nube</button>
-          <span id="cloud-test-result" style="font-size:11px;color:var(--muted)"></span>
-        </div>
-      </div>
-      <div class="sep"></div>
-      <div class="form-group" style="margin-bottom:16px">
         <label class="form-label">👤 Perfiles de tarifa</label>
         <div style="display:flex;gap:8px;margin-bottom:8px">
           <span style="font-size:11px;color:var(--muted);font-weight:700;flex:1">Nombre del perfil</span>
@@ -1028,6 +1005,39 @@ a { color: var(--primary); }
 <!-- FILE INPUT HIDDEN -->
 <input type="file" id="import-file" accept=".json" class="hidden" onchange="handleImport(event)">
 
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB0F-USdHU_KgrsahqdjqZRY8tsmr84JZo",
+  authDomain: "proyak-845c5.firebaseapp.com",
+  projectId: "proyak-845c5",
+  storageBucket: "proyak-845c5.firebasestorage.app",
+  messagingSenderId: "388705316962",
+  appId: "1:388705316962:web:0fa5c923d6c78ee903213b"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+window._fb = { auth, db,
+  signIn: () => signInWithPopup(auth, provider),
+  signOut: () => signOut(auth),
+  saveUser: (uid, data) => setDoc(doc(db, 'users', uid, 'workspace', 'data'), data),
+  loadUser: async (uid) => { const s = await getDoc(doc(db, 'users', uid, 'workspace', 'data')); return s.exists() ? s.data() : null; },
+  getAllUsers: async () => { const s = await getDocs(collection(db, 'users')); return s.docs.map(d => ({uid: d.id, ...d.data()})); }
+};
+
+onAuthStateChanged(auth, user => {
+  window._fbUser = user || null;
+  if (typeof onFirebaseAuth === 'function') onFirebaseAuth(user);
+});
+</script>
+
 <script>
 // ============================================================
 // DATA MODEL
@@ -1164,9 +1174,6 @@ function loadData() {
       // No llamar saveData aquí — lastSaved queda undefined (epoch)
       // para que pullFromCloud detecte correctamente que la nube es más reciente
     }
-    // Load cloud settings from separate key (never lost on data import)
-    const cs = localStorage.getItem('proyak_cloud');
-    if(cs) { const c=JSON.parse(cs); DB.cloudKey=c.key; DB.cloudBin=c.bin; }
   } catch(e) {
     DB.projects = [];
     DB.preventa = [];
@@ -1185,7 +1192,7 @@ function setCloudBar(state, text) {
   bar.className = 'cloud-bar ' + (state||'');
   bar.textContent = text;
   bar.style.display = text ? '' : 'none';
-  if(btn) btn.style.display = DB.cloudKey ? '' : 'none';
+  if(btn) btn.style.display = 'none';
 }
 
 function saveData(toast=true) {
@@ -1196,10 +1203,10 @@ function saveData(toast=true) {
   if(toast) showToast('✅ Guardado');
   if(fsHandle) {
     saveToFile();
-  } else if(DB.cloudKey) {
+  } else {
     setCloudBar('pending', '☁ Sincronizando...');
     clearTimeout(cloudSyncTimer);
-    cloudSyncTimer = setTimeout(pushToCloud, 2500);
+    if (window._fbUser) cloudSyncTimer = setTimeout(pushToCloud, 2500);
   }
 }
 
@@ -1239,60 +1246,34 @@ function handleImport(e) {
       const data = JSON.parse(ev.target.result);
       if(!data.projects) { showToast('❌ Fichero no válido'); return; }
 
-      // Credenciales: el bin activo en localStorage siempre tiene prioridad sobre el del fichero
-      // Si el JSON viene de otra app (appId distinto), ignorar su cloudBin para no mezclar bins
-      let cloudKey = data.cloudKey;
-      let cloudBin = (data.appId && data.appId !== 'proyak') ? undefined : data.cloudBin;
-      if(data.appId && data.appId !== 'proyak') showToast('⚠ JSON de otra app — configuración de nube ignorada');
-      try {
-        const cs = JSON.parse(localStorage.getItem('proyak_cloud')||'{}');
-        if(!cloudKey) cloudKey = cs.key;
-        if(cs.bin) cloudBin = cs.bin; // bin local siempre gana
-      } catch(e) {}
+      if(data.appId && data.appId !== 'proyak') showToast('⚠ JSON de otra app — cargando datos de todos modos');
 
       // Cargar datos del JSON como base (appId siempre es el de esta app)
-      DB = { ...data, appId: 'proyak', cloudKey, cloudBin };
-      if(cloudKey) localStorage.setItem('proyak_cloud', JSON.stringify({key: cloudKey, bin: cloudBin||''}));
+      DB = { ...data, appId: 'proyak' };
       localStorage.setItem('proyak_v1', JSON.stringify(DB));
       renderAll();
       showToast('⬆ Datos importados');
 
-      // Si hay nube: consultar y preguntar al usuario si hay datos más recientes
-      if(cloudKey && cloudBin) {
+      // Si hay sesión: consultar si la nube tiene datos más recientes
+      if (window._fbUser) {
         try {
-          showToast('☁ Consultando nube...');
-          const res = await fetch(`https://api.jsonbin.io/v3/b/${cloudBin}/latest`, {
-            headers: { 'X-Master-Key': cloudKey }
-          });
-          if(res.ok) {
-            const result = await res.json();
-            const remote = result.record;
-            if(remote && remote.projects) {
-              const remoteDate = remote.lastSaved ? new Date(remote.lastSaved) : new Date(0);
-              const localDate  = data.lastSaved   ? new Date(data.lastSaved)   : new Date(0);
-              if(remoteDate > localDate) {
-                const remoteStr = remote.lastSaved
-                  ? new Date(remote.lastSaved).toLocaleString('es-ES', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})
-                  : 'fecha desconocida';
-                const cargar = confirm(`☁ La nube tiene un backup más reciente (${remoteStr}).\n\n¿Cargar datos desde la nube?\n\n· Aceptar → usar datos de la nube\n· Cancelar → usar el JSON importado`);
-                if(cargar) {
-                  DB = { ...remote, cloudKey, cloudBin };
-                  localStorage.setItem('proyak_v1', JSON.stringify(DB));
-                  renderAll();
-                  showToast('☁ Datos cargados desde la nube');
-                  saveData(false);
-                  return;
-                }
-              } else {
-                showToast('✅ El JSON importado está al día con la nube');
+          const remote = await window._fb.loadUser(window._fbUser.uid);
+          if (remote && remote.lastSaved) {
+            const remoteDate = new Date(remote.lastSaved);
+            const localDate = data.lastSaved ? new Date(data.lastSaved) : new Date(0);
+            if (remoteDate > localDate) {
+              const remoteStr = remoteDate.toLocaleString('es-ES', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+              const cargar = confirm(`☁ La nube tiene datos más recientes (${remoteStr}).\n\n¿Cargar desde la nube?\n\n· Aceptar → usar datos de la nube\n· Cancelar → usar el JSON importado`);
+              if (cargar) {
+                DB = { ...remote, appId: 'proyak' };
+                localStorage.setItem('proyak_v1', JSON.stringify(DB));
+                renderAll();
+                showToast('☁ Datos cargados desde la nube');
+                return;
               }
             }
-          } else {
-            showToast('⚠ Nube no disponible ('+res.status+')');
           }
-        } catch(err) {
-          showToast('⚠ Error de red al consultar la nube');
-        }
+        } catch(e) { /* ignore */ }
       }
 
       saveData(false);
@@ -2017,7 +1998,7 @@ function checkBackupBanner() {
   const banner = document.getElementById('backup-banner');
   if(!banner) return;
   const hasProjects = DB.projects && DB.projects.length > 0;
-  const hasCloud = !!DB.cloudKey;
+  const hasCloud = !!window._fbUser;
   const hasExported = !!DB.lastExported;
   const dismissed = sessionStorage.getItem('backup_dismissed');
   if(hasProjects && !hasCloud && !hasExported && !dismissed) {
@@ -2103,7 +2084,7 @@ function renderHistorico() {
   // Cloud badge
   const badge = document.getElementById('cloud-status-badge');
   if(badge) {
-    if(DB.cloudKey && DB.cloudBin) { badge.className='cloud-badge cloud-ok'; badge.textContent='☁ Nube activa'; }
+    if(window._fbUser) { badge.className='cloud-badge cloud-ok'; badge.textContent='☁ Nube activa'; }
     else { badge.className='cloud-badge cloud-off'; badge.textContent='☁ Sin nube'; }
   }
 
@@ -2155,49 +2136,48 @@ function editLecciones(id, spanEl) {
 }
 
 // ============================================================
-// CLOUD SYNC (JSONBin.io)
+// CLOUD SYNC (Firebase Firestore)
 // ============================================================
 let cloudSyncTimer = null;
 
+function onFirebaseAuth(user) {
+  const badge = document.getElementById('user-badge');
+  const loginBtn = document.getElementById('btn-login');
+  if (user) {
+    badge.style.display = 'flex';
+    loginBtn.style.display = 'none';
+    document.getElementById('user-email').textContent = user.displayName || user.email;
+    const av = document.getElementById('user-avatar');
+    if (user.photoURL) { av.src = user.photoURL; av.style.display = ''; }
+    else av.style.display = 'none';
+    setCloudBar('pending', '☁ Sincronizando...');
+    pullFromCloud(true);
+  } else {
+    badge.style.display = 'none';
+    loginBtn.style.display = '';
+    setCloudBar('', '');
+    checkBackupBanner();
+  }
+}
+
+async function fbSignIn() {
+  if (!window._fb) { showToast('⚠ Firebase no disponible'); return; }
+  try { await window._fb.signIn(); } catch(e) { showToast('❌ Error al iniciar sesión'); }
+}
+
+async function fbSignOut() {
+  if (!window._fb) return;
+  await window._fb.signOut();
+  showToast('Sesión cerrada');
+}
+
 async function pushToCloud() {
-  if(!DB.cloudKey) return;
+  if (!window._fbUser || !window._fb) return;
   try {
-    // Strip credentials before sending — never store the API key in the cloud
     const payload = Object.fromEntries(
-      Object.entries(DB).filter(([k]) => k !== 'cloudKey' && k !== 'cloudBin')
+      Object.entries(DB).filter(([k]) => !['cloudKey','cloudBin'].includes(k))
     );
-    const body = JSON.stringify(payload);
-
-    // JSONBin free tier limit: 100 KB
-    if(body.length > 95000) {
-      console.warn('Proyak cloud: payload demasiado grande (' + body.length + ' bytes). No se sincronizó.');
-      return;
-    }
-
-    const headers = { 'Content-Type': 'application/json', 'X-Master-Key': DB.cloudKey };
-    let url, method;
-    if(DB.cloudBin) {
-      url = `https://api.jsonbin.io/v3/b/${DB.cloudBin}`;
-      method = 'PUT';
-    } else {
-      url = 'https://api.jsonbin.io/v3/b';
-      method = 'POST';
-      headers['X-Bin-Name'] = 'proyak-data';
-      headers['X-Bin-Private'] = 'true';
-    }
-
-    const res = await fetch(url, { method, headers, body });
-    if(res.status === 401) { console.warn('Proyak cloud: API Key inválida (401). Revisa en Ajustes ⚙'); return; }
-    if(!res.ok) { console.warn('Proyak cloud: error HTTP ' + res.status); return; }
-
-    const data = await res.json();
-    // First push creates the bin — save the new bin ID
-    if(!DB.cloudBin && data.metadata?.id) {
-      DB.cloudBin = data.metadata.id;
-      localStorage.setItem('proyak_cloud', JSON.stringify({ key: DB.cloudKey, bin: DB.cloudBin }));
-      localStorage.setItem('proyak_v1', JSON.stringify(DB));
-      showToast('☁ Bin creado: ' + DB.cloudBin);
-    }
+    await window._fb.saveUser(window._fbUser.uid, payload);
     const hora = new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
     setCloudBar('ok', '☁ Guardado ' + hora);
   } catch(e) {
@@ -2207,81 +2187,35 @@ async function pushToCloud() {
 }
 
 async function forceSaveToCloud() {
-  if(!DB.cloudKey) { showToast('⚠ Configura la nube en Ajustes primero'); return; }
+  if (!window._fbUser) { showToast('⚠ Inicia sesión para guardar en la nube'); return; }
   const también = confirm(
     '☁ Guardar en la nube\n\n' +
-    'Se enviará una copia de tus datos a JSONBin ahora mismo.\n\n' +
+    'Se enviará una copia de tus datos a Firestore ahora mismo.\n\n' +
     '¿Quieres exportar también una copia local (JSON) como respaldo?'
   );
   clearTimeout(cloudSyncTimer);
   setCloudBar('pending', '☁ Guardando...');
   await pushToCloud();
-  if(también) exportData();
+  if (también) exportData();
 }
 
-async function pullFromCloud(silent=false) {
-  if(!DB.cloudKey || !DB.cloudBin) { if(!silent) showToast('⚠ Configura API Key y Bin ID primero'); return; }
+async function pullFromCloud(silent = false) {
+  if (!window._fbUser || !window._fb) { if (!silent) showToast('⚠ Inicia sesión primero'); return; }
   try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${DB.cloudBin}/latest`, {
-      headers: { 'X-Master-Key': DB.cloudKey }
-    });
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const data = await res.json();
-    const remote = data.record;
+    const remote = await window._fb.loadUser(window._fbUser.uid);
+    if (!remote) { if (!silent) showToast('☁ Sin datos en la nube todavía'); return; }
     const localDate = DB.lastSaved ? new Date(DB.lastSaved) : new Date(0);
     const remoteDate = remote.lastSaved ? new Date(remote.lastSaved) : new Date(0);
-    if(remoteDate > localDate) {
-      DB = { ...remote, cloudKey: DB.cloudKey, cloudBin: DB.cloudBin };
+    if (remoteDate > localDate) {
+      DB = { ...remote, appId: 'proyak' };
       localStorage.setItem('proyak_v1', JSON.stringify(DB));
       renderAll();
       showToast('☁ Datos actualizados desde la nube');
     } else {
-      if(!silent) showToast('✅ Ya tienes la versión más reciente');
+      if (!silent) showToast('✅ Ya tienes la versión más reciente');
     }
   } catch(e) {
-    if(!silent) showToast('❌ Error al conectar: ' + e.message);
-  }
-}
-
-async function testCloudSync() {
-  const key = document.getElementById('set-apikey').value.trim();
-  const bin = document.getElementById('set-binid').value.trim();
-  const result = document.getElementById('cloud-test-result');
-  result.style.color = 'var(--muted)';
-
-  if(!key) { result.textContent = '⚠ Introduce la API Key primero'; return; }
-  if(!key.startsWith('$2a$') && !key.startsWith('$2b$')) {
-    result.textContent = '⚠ La key debe empezar por $2a$10$... (cópiala tal cual de JSONBin)';
-    result.style.color = 'var(--warning)';
-    return;
-  }
-  if(!bin) {
-    result.textContent = '⚠ Introduce también el Bin ID para probar';
-    result.style.color = 'var(--warning)';
-    return;
-  }
-
-  result.textContent = '⏳ Probando...';
-  try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${bin}/latest`, {
-      headers: { 'X-Master-Key': key }
-    });
-    if(res.status === 401) {
-      result.textContent = '❌ API Key incorrecta (401) — verifica que la copiaste completa';
-      result.style.color = 'var(--danger)';
-    } else if(res.status === 404) {
-      result.textContent = '⚠ Key OK pero Bin ID no encontrado (404) — crea un bin nuevo primero';
-      result.style.color = 'var(--warning)';
-    } else if(res.ok) {
-      result.textContent = '✅ Conexión OK — key y bin válidos';
-      result.style.color = 'var(--success)';
-    } else {
-      result.textContent = '❌ Error HTTP ' + res.status;
-      result.style.color = 'var(--danger)';
-    }
-  } catch(e) {
-    result.textContent = '❌ Error de red: ' + e.message;
-    result.style.color = 'var(--danger)';
+    if (!silent) showToast('❌ Error al conectar: ' + e.message);
   }
 }
 
@@ -2295,10 +2229,7 @@ function openHelpModal() {
 // SETTINGS MODAL
 // ============================================================
 function openSettingsModal() {
-  document.getElementById('set-apikey').value = DB.cloudKey||'';
-  document.getElementById('set-binid').value = DB.cloudBin||'';
   document.getElementById('set-hpj').value = DB.horasPorJornada||8;
-  document.getElementById('cloud-test-result').textContent = '';
   const fsEl = document.getElementById('fs-folder-name');
   if(fsEl) fsEl.textContent = fsHandle ? '📁 '+fsHandle.name : 'No conectada';
   renderPerfilesList();
@@ -2306,17 +2237,11 @@ function openSettingsModal() {
 }
 
 function saveSettings() {
-  const key = document.getElementById('set-apikey').value.trim();
-  const bin = document.getElementById('set-binid').value.trim();
-  DB.cloudKey = key||undefined;
-  DB.cloudBin = bin||undefined;
   DB.horasPorJornada = +document.getElementById('set-hpj').value || 8;
-  if(key) localStorage.setItem('proyak_cloud', JSON.stringify({key,bin}));
-  else localStorage.removeItem('proyak_cloud');
   saveData(false);
   closeModal('settings-modal');
   renderAll();
-  showToast(key ? '☁ Ajustes guardados' : '✅ Ajustes guardados');
+  showToast('✅ Ajustes guardados');
 }
 
 async function pickWorkspaceFolder() {
@@ -2590,8 +2515,9 @@ function addPerfil() {
 document.getElementById('version-label').textContent = 'v' + VERSION + ' · ' + VERSION_DATE;
 loadData();
 renderAll();
-if(DB.cloudKey) setCloudBar('ok', '☁ Nube conectada');
-if(DB.cloudKey && DB.cloudBin) pullFromCloud(true);
+// Show login button — auth state will be set by onAuthStateChanged
+const loginBtn = document.getElementById('btn-login');
+if (loginBtn) loginBtn.style.display = '';
 </script>
 </body>
 </html>
