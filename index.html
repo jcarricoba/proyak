@@ -1226,6 +1226,10 @@ function loadData() {
     DB.preventa = [];
   }
   document.getElementById('ws-name').value = DB.workspace || 'Mi Área';
+  if(DB.lastSaved) {
+    const el = document.getElementById('last-saved');
+    if(el) el.textContent = 'Guardado ' + new Date(DB.lastSaved).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+  }
 }
 
 function setCloudBar(state, text) {
