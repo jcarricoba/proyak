@@ -6,14 +6,13 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      // Admin puede leer todos los perfiles; cada usuario el suyo
       allow read: if isAdmin() || request.auth.uid == uid;
-      // Solo el propio usuario escribe su perfil (pushToCloud lo hace)
       allow write: if request.auth.uid == uid;
+      allow delete: if isAdmin();
 
       match /workspace/data {
         allow read, write: if request.auth.uid == uid;
-        allow read: if isAdmin();
+        allow read, delete: if isAdmin();
       }
     }
   }

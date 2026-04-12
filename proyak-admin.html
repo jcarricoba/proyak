@@ -30,6 +30,8 @@ tr:hover td { background: rgba(255,255,255,.02); }
 .btn { padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; }
 .btn-ghost { background: rgba(255,255,255,.07); color: rgba(255,255,255,.7); }
 .btn-ghost:hover { background: rgba(255,255,255,.12); }
+.btn-delete { background: rgba(248,113,113,.1); color: #f87171; border: 1px solid rgba(248,113,113,.2); padding: 3px 10px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; }
+.btn-delete:hover { background: rgba(248,113,113,.2); }
 #login-screen { display: flex; align-items: center; justify-content: center; min-height: 80vh; flex-direction: column; gap: 16px; }
 #admin-screen { display: none; }
 .btn-primary { background: #60a5fa; color: #fff; }
@@ -90,7 +92,7 @@ tr:hover td { background: rgba(255,255,255,.02); }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const ADMIN_UIDS = ['El6MTxcd3AcCgTkkBzsv5tSbWR83'];
 
@@ -137,6 +139,17 @@ function initials(name) {
   return name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
 }
 
+window.deleteUser = async function(uid, name) {
+  if (!confirm(`¿Eliminar todos los datos de "${name}"?\n\nSe borrará su workspace de Firestore. No se puede deshacer.`)) return;
+  try {
+    await deleteDoc(doc(db, 'users', uid, 'workspace', 'data'));
+    await deleteDoc(doc(db, 'users', uid));
+    loadUsers();
+  } catch(e) {
+    alert('Error al eliminar: ' + e.message);
+  }
+};
+
 window.loadUsers = async function() {
   const tbody = document.getElementById('users-table');
   tbody.innerHTML = '<tr><td colspan="5" class="empty">Cargando...</td></tr>';
@@ -154,7 +167,7 @@ window.loadUsers = async function() {
       const isActive = lastLogin && lastLogin > sevenDaysAgo;
       if (isActive) activeCount++;
       totalSize += p.dataSize || 0;
-      rows.push({ name: p.displayName||'—', email: p.email||'—', lastLogin, lastSaved, dataSize: p.dataSize||0, isActive });
+      rows.push({ uid: d.id, name: p.displayName||'—', email: p.email||'—', lastLogin, lastSaved, dataSize: p.dataSize||0, isActive });
     }
 
     rows.sort((a, b) => (b.lastLogin||0) - (a.lastLogin||0));
@@ -184,7 +197,10 @@ window.loadUsers = async function() {
             <span style="color:#d1d5db;font-size:11px">${fmtSize(r.dataSize)}</span>
             <div class="size-bar-bg"><div class="size-bar" style="width:${Math.round(r.dataSize/maxSize*100)}%"></div></div>
           </td>
-          <td><span class="badge ${r.isActive ? 'badge-active' : 'badge-inactive'}">${r.isActive ? 'Activo' : 'Inactivo'}</span></td>
+          <td style="display:flex;align-items:center;gap:10px">
+            <span class="badge ${r.isActive ? 'badge-active' : 'badge-inactive'}">${r.isActive ? 'Activo' : 'Inactivo'}</span>
+            <button class="btn btn-delete" onclick="deleteUser('${r.uid}','${r.name}')">Eliminar</button>
+          </td>
         </tr>`).join('');
   } catch(e) {
     tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color:#f87171">Error: ${e.message}</td></tr>`;
