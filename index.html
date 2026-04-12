@@ -19,30 +19,53 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; min-height: 100vh; }
 
-/* ===== HEADER ===== */
-.header { background: var(--header); color: #fff; padding: 0 20px; height: 52px; display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.3); position: sticky; top: 0; z-index: 100; }
-.logo { font-size: 18px; font-weight: 800; letter-spacing: -.5px; display: flex; align-items: center; gap: 8px; }
-.logo svg { filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
-.workspace-badge { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 20px; padding: 3px 10px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background .15s; }
-.workspace-badge:hover { background: rgba(255,255,255,.18); }
-.workspace-edit { background: transparent; border: none; color: #fff; font-size: 11px; width: 140px; outline: none; }
-.header-sep { flex: 1; }
-.header-saved { font-size: 11px; color: rgba(255,255,255,.4); }
-.cloud-bar { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; display: none; }
-.cloud-bar.ok  { background: rgba(74,222,128,.15); color: #4ade80; }
-.cloud-bar.pending { background: rgba(251,191,36,.12); color: #fbbf24; }
-.cloud-bar.error { background: rgba(248,113,113,.15); color: #f87171; }
-.header-btn { display: flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
-.hbtn-ghost { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8); }
-.hbtn-ghost:hover { background: rgba(255,255,255,.15); }
-.hbtn-primary { background: var(--primary); color: #fff; }
-.hbtn-primary:hover { background: var(--primary-d); }
+/* ===== LAYOUT ===== */
+html, body { height: 100%; overflow: hidden; }
+.app-shell { display: flex; height: 100vh; }
 
-/* ===== TABS ===== */
-.tabs { display: flex; gap: 2px; padding: 0 20px; background: var(--header2); border-bottom: 1px solid rgba(255,255,255,.07); }
-.tab { padding: 10px 16px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.5); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s; }
-.tab:hover { color: rgba(255,255,255,.8); }
-.tab.active { color: #fff; border-color: var(--primary); }
+/* ===== SIDEBAR ===== */
+.sidebar { width: 220px; min-width: 220px; background: #0d1117; display: flex; flex-direction: column; transition: width .2s ease; overflow: hidden; border-right: 1px solid rgba(255,255,255,.07); position: relative; z-index: 100; flex-shrink: 0; }
+.sidebar.collapsed { width: 52px; }
+.sb-toggle { position: absolute; right: -11px; top: 22px; width: 22px; height: 22px; background: #0d1117; border: 1px solid rgba(255,255,255,.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: rgba(255,255,255,.5); font-size: 10px; z-index: 101; transition: all .15s; user-select: none; }
+.sb-toggle:hover { color: #fff; border-color: rgba(255,255,255,.35); }
+.sb-logo { display: flex; align-items: center; gap: 10px; padding: 14px 12px 8px; white-space: nowrap; overflow: hidden; flex-shrink: 0; }
+.sb-logo-text { font-size: 16px; font-weight: 800; letter-spacing: -.4px; color: #fff; }
+.sb-version { font-size: 9px; color: rgba(255,255,255,.28); margin-top: 1px; }
+.sidebar.collapsed .sb-logo-text, .sidebar.collapsed .sb-version { display: none; }
+.sb-workspace { padding: 0 10px 8px; white-space: nowrap; overflow: hidden; flex-shrink: 0; }
+.sb-ws-input { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); border-radius: 6px; color: #fff; font-size: 11px; width: 100%; padding: 5px 9px; outline: none; font-family: inherit; }
+.sb-ws-input:focus { border-color: rgba(96,165,250,.5); }
+.sidebar.collapsed .sb-workspace { display: none; }
+.sb-divider { height: 1px; background: rgba(255,255,255,.07); margin: 2px 0; flex-shrink: 0; }
+.sb-nav { padding: 4px 8px; display: flex; flex-direction: column; gap: 1px; }
+.sb-item { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 7px; cursor: pointer; color: rgba(255,255,255,.5); font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; transition: all .15s; border: none; background: none; width: 100%; text-align: left; }
+.sb-item:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.9); }
+.sb-item.active { background: rgba(96,165,250,.15); color: #60a5fa; font-weight: 600; }
+.sb-item svg { flex-shrink: 0; opacity: .8; }
+.sb-item.active svg { opacity: 1; }
+.sidebar.collapsed .sb-item span { display: none; }
+.sb-section-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.22); text-transform: uppercase; letter-spacing: .07em; padding: 8px 16px 3px; white-space: nowrap; flex-shrink: 0; }
+.sidebar.collapsed .sb-section-label { display: none; }
+.sb-bottom { margin-top: auto; border-top: 1px solid rgba(255,255,255,.07); padding: 8px 8px; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+.sb-user { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; overflow: hidden; white-space: nowrap; }
+.sb-user img { border-radius: 50%; flex-shrink: 0; }
+.sb-user-info { display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.sb-user-name { font-size: 11px; font-weight: 600; color: #f9fafb; overflow: hidden; text-overflow: ellipsis; }
+.sb-cloud-status { font-size: 10px; color: rgba(255,255,255,.4); margin-top: 1px; }
+.sidebar.collapsed .sb-user-info { display: none; }
+.sidebar.collapsed .sb-bottom .sb-item span { display: none; }
+
+/* ===== TOPBAR ===== */
+.topbar { height: 46px; background: #161b22; border-bottom: 1px solid rgba(255,255,255,.07); display: flex; align-items: center; padding: 0 20px; gap: 10px; flex-shrink: 0; }
+.topbar-sep { flex: 1; }
+.top-btn { display: flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+.top-btn-primary { background: var(--primary); color: #fff; }
+.top-btn-primary:hover { background: var(--primary-d); }
+.header-saved { font-size: 11px; color: rgba(255,255,255,.3); }
+
+/* ===== CONTENT AREA ===== */
+.content-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.content-scroll { flex: 1; overflow-y: auto; }
 
 /* ===== MAIN ===== */
 .main { padding: 20px; max-width: 1600px; margin: 0 auto; }
@@ -336,63 +359,178 @@ a { color: var(--primary); }
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
+<div class="app-shell">
 
-<!-- HEADER -->
-<div class="header">
-  <div class="logo">
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
-      <!-- Montaña nevada estilo Himalaya -->
-      <polygon points="16,3 29,26 3,26" fill="#3b82f6" opacity="0.9"/>
-      <polygon points="16,3 21,13 11,13" fill="white" opacity="0.92"/>
-      <!-- Pico secundario izquierda -->
-      <polygon points="7,26 14,14 20,26" fill="#2563eb" opacity="0.7"/>
-      <!-- Línea de horizonte nevada -->
-      <polyline points="3,26 7,18 12,22 16,14 20,20 24,16 29,26" stroke="white" stroke-width="0.8" fill="none" opacity="0.4"/>
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-toggle" id="sb-toggle" onclick="toggleSidebar()">◀</div>
+
+  <div class="sb-logo">
+    <svg width="30" height="30" viewBox="0 0 34 34" fill="none" style="flex-shrink:0">
+      <path d="M11,13 C9,9 6,7 8,4" stroke="white" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M23,13 C25,9 28,7 26,4" stroke="white" stroke-width="2.6" stroke-linecap="round"/>
+      <rect x="8" y="11" width="18" height="15" rx="5" fill="white" fill-opacity="0.88"/>
+      <circle cx="13.5" cy="17.5" r="1.7" fill="#1a2744"/>
+      <circle cx="20.5" cy="17.5" r="1.7" fill="#1a2744"/>
+      <ellipse cx="17" cy="23" rx="3.5" ry="2" fill="#1a2744" fill-opacity="0.25"/>
+      <path d="M8,26 Q5,29 7,33" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M13,26 Q11,30 12,34" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M17,26 Q17,31 17,34" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M21,26 Q23,30 22,34" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M26,26 Q29,29 27,33" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
     </svg>
-    Proyak
-    <span id="version-label" style="font-size:10px;font-weight:400;color:rgba(255,255,255,.35);letter-spacing:0"></span>
+    <div>
+      <div class="sb-logo-text">Proyak</div>
+      <div class="sb-version" id="version-label"></div>
+    </div>
   </div>
-  <div class="workspace-badge" onclick="editWorkspace()">
-    ✏ <input class="workspace-edit" id="ws-name" value="Mi Área" onchange="saveWsName()" onclick="event.stopPropagation()">
+
+  <div class="sb-workspace">
+    <input class="sb-ws-input" id="ws-name" value="Mi Área" onchange="saveWsName()" placeholder="Workspace...">
   </div>
-  <span class="header-saved" id="last-saved"></span>
-  <span class="cloud-bar" id="cloud-bar"></span>
-  <div class="header-sep"></div>
-  <button class="header-btn hbtn-ghost" id="unit-toggle" onclick="toggleUnidad()" title="Cambiar entre jornadas y horas">⏱ Ver en horas</button>
-  <button class="header-btn hbtn-ghost" onclick="downloadTemplate('est')" title="Plantilla Excel Estimación">📥 Est.</button>
-  <button class="header-btn hbtn-ghost" onclick="downloadTemplate('gantt')" title="Plantilla Excel Gantt">📥 Gantt</button>
-  <button class="header-btn hbtn-ghost" onclick="importData()" title="Importar datos JSON">⬆ Importar</button>
-  <button class="header-btn hbtn-ghost" onclick="exportData()" title="Exportar datos JSON">⬇ Exportar</button>
-  <span id="user-badge" style="display:none;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.7)">
-    <img id="user-avatar" width="22" height="22" style="border-radius:50%">
-    <span id="user-email"></span>
-    <button class="header-btn hbtn-ghost" onclick="fbSignOut()">Salir</button>
-  </span>
-  <button class="header-btn hbtn-ghost" id="btn-login" onclick="fbSignIn()" style="display:none">🔑 Entrar</button>
-  <button class="header-btn hbtn-ghost" onclick="openHelpModal()" title="Ayuda y FAQ">? Ayuda</button>
-  <button class="header-btn hbtn-ghost" onclick="openSettingsModal()" title="Ajustes y nube">⚙ Ajustes</button>
-  <button class="header-btn hbtn-primary" onclick="openProjectModal(null)">＋ Proyecto</button>
-</div>
 
-<!-- BACKUP BANNER -->
-<div id="backup-banner" style="display:none;background:#78350f;color:#fef3c7;padding:8px 20px;font-size:12px;display:flex;align-items:center;gap:10px;">
-  <span>⚠</span>
-  <span>Tus datos solo existen en este navegador. Haz una copia de seguridad para no perderlos.</span>
-  <button onclick="exportData()" style="background:#f59e0b;color:#1c1917;border:none;border-radius:5px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">⬇ Exportar ahora</button>
-  <button onclick="fbSignIn()" style="background:transparent;color:#fbbf24;border:1px solid #fbbf24;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer">🔑 Iniciar sesión</button>
-  <span style="flex:1"></span>
-  <button onclick="dismissBackupBanner()" style="background:transparent;border:none;color:#fef3c7;font-size:16px;cursor:pointer;line-height:1">✕</button>
-</div>
+  <div class="sb-divider"></div>
 
-<!-- TABS -->
-<div class="tabs">
-  <div class="tab active" id="tab-portfolio" onclick="showTab('portfolio')">📊 Portfolio</div>
-  <div class="tab" id="tab-preventa" onclick="showTab('preventa')">🎯 Preventa</div>
-  <div class="tab" id="tab-historico" onclick="showTab('historico')">📦 Histórico</div>
-</div>
+  <nav class="sb-nav">
+    <button class="sb-item active" id="tab-portfolio" onclick="showTab('portfolio')">
+      <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+        <polygon points="9,2 17,16 1,16" fill="currentColor" opacity="0.85"/>
+        <polygon points="9,2 11.5,7 6.5,7" fill="white" opacity="0.7"/>
+        <polygon points="4,16 8,9 12,16" fill="currentColor" opacity="0.5"/>
+      </svg>
+      <span>Portfolio</span>
+    </button>
+    <button class="sb-item" id="tab-preventa" onclick="showTab('preventa')">
+      <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+        <line x1="9" y1="9" x2="15" y2="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="15.5" cy="3.5" r="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <line x1="9" y1="9" x2="3" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="9" y1="9" x2="9" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span>Preventa</span>
+    </button>
+    <button class="sb-item" id="tab-historico" onclick="showTab('historico')">
+      <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+        <rect x="2" y="3" width="14" height="3.5" rx="1" fill="currentColor" opacity="0.7"/>
+        <path d="M3,6.5 L3,14.5 Q3,15.5 4,15.5 L14,15.5 Q15,15.5 15,14.5 L15,6.5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <line x1="7" y1="10.5" x2="11" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span>Histórico</span>
+    </button>
+  </nav>
 
-<!-- MAIN -->
-<div class="main">
+  <div class="sb-divider"></div>
+  <div class="sb-section-label">Administración</div>
+
+  <nav class="sb-nav">
+    <button class="sb-item" id="unit-toggle" onclick="toggleUnidad()">
+      <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+        <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <line x1="9" y1="5" x2="9" y2="9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="9" y1="9" x2="12" y2="11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <span id="unit-toggle-label">Ver en horas</span>
+    </button>
+    <button class="sb-item" onclick="importData()">
+      <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+        <rect x="3" y="9" width="12" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <line x1="9" y1="2" x2="9" y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <polyline points="6,5 9,2 12,5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Importar JSON</span>
+    </button>
+    <button class="sb-item" onclick="exportData()">
+      <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+        <rect x="3" y="9" width="12" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <line x1="9" y1="2" x2="9" y2="9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <polyline points="6,6 9,9 12,6" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Exportar JSON</span>
+    </button>
+    <button class="sb-item" onclick="downloadTemplate('est')">
+      <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+        <rect x="3" y="2" width="12" height="14" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <line x1="6" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <line x1="6" y1="10" x2="12" y2="10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <line x1="6" y1="13" x2="10" y2="13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span>Plantilla Estimación</span>
+    </button>
+    <button class="sb-item" onclick="downloadTemplate('gantt')">
+      <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+        <rect x="2" y="4" width="7" height="2.5" rx="1" fill="currentColor" opacity="0.8"/>
+        <rect x="5" y="8.5" width="9" height="2.5" rx="1" fill="currentColor" opacity="0.6"/>
+        <rect x="3" y="13" width="6" height="2.5" rx="1" fill="currentColor" opacity="0.5"/>
+      </svg>
+      <span>Plantilla Gantt</span>
+    </button>
+    <button class="sb-item" onclick="openSettingsModal()">
+      <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+        <circle cx="9" cy="9" r="2.5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <path d="M9,1.5 L9,3.5 M9,14.5 L9,16.5 M1.5,9 L3.5,9 M14.5,9 L16.5,9 M3.6,3.6 L5,5 M13,13 L14.4,14.4 M14.4,3.6 L13,5 M5,13 L3.6,14.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span>Ajustes</span>
+    </button>
+    <button class="sb-item" onclick="openHelpModal()">
+      <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+        <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <path d="M7,7 C7,5.5 8,5 9,5 C10.1,5 11,5.8 11,7 C11,8.2 10,8.8 9,9.8 L9,10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="9" cy="13" r="0.9" fill="currentColor"/>
+      </svg>
+      <span>Ayuda</span>
+    </button>
+  </nav>
+
+  <div class="sb-bottom">
+    <div id="user-badge" style="display:none" class="sb-user">
+      <img id="user-avatar" width="26" height="26" style="border-radius:50%;flex-shrink:0">
+      <div class="sb-user-info">
+        <div class="sb-user-name" id="user-email"></div>
+        <div class="sb-cloud-status" id="cloud-bar"></div>
+      </div>
+    </div>
+    <span class="header-saved" id="last-saved" style="padding:2px 8px;font-size:10px"></span>
+    <button class="sb-item" id="btn-login" onclick="fbSignIn()" style="display:none">
+      <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+        <rect x="10" y="3" width="5" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <line x1="2" y1="9" x2="11" y2="9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <polyline points="8,6 11,9 8,12" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Entrar con Google</span>
+    </button>
+    <button class="sb-item" id="btn-signout" onclick="fbSignOut()" style="display:none">
+      <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
+        <path d="M7,3 L3,3 Q2,3 2,4 L2,14 Q2,15 3,15 L7,15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <line x1="12" y1="9" x2="16" y2="9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <polyline points="13,6 16,9 13,12" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Cerrar sesión</span>
+    </button>
+  </div>
+</aside>
+
+<!-- ===== CONTENT AREA ===== -->
+<div class="content-area">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <span class="header-saved" id="topbar-saved" style="display:none"></span>
+    <span class="topbar-sep"></span>
+    <button class="top-btn top-btn-primary" onclick="openProjectModal(null)">＋ Proyecto</button>
+  </div>
+
+  <!-- Backup banner -->
+  <div id="backup-banner" style="display:none;background:#78350f;color:#fef3c7;padding:8px 20px;font-size:12px;flex-shrink:0;align-items:center;gap:10px;">
+    <span>⚠</span>
+    <span>Tus datos solo existen en este navegador. Haz una copia de seguridad para no perderlos.</span>
+    <button onclick="exportData()" style="background:#f59e0b;color:#1c1917;border:none;border-radius:5px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">⬇ Exportar ahora</button>
+    <button onclick="fbSignIn()" style="background:transparent;color:#fbbf24;border:1px solid #fbbf24;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer">🔑 Iniciar sesión</button>
+    <span style="flex:1"></span>
+    <button onclick="dismissBackupBanner()" style="background:transparent;border:none;color:#fef3c7;font-size:16px;cursor:pointer;line-height:1">✕</button>
+  </div>
+
+  <div class="content-scroll">
+  <div class="main">
 
   <!-- ===== PORTFOLIO ===== -->
   <div id="view-portfolio">
@@ -1187,12 +1325,9 @@ function loadData() {
 
 function setCloudBar(state, text) {
   const bar = document.getElementById('cloud-bar');
-  const btn = document.getElementById('btn-force-cloud');
   if(!bar) return;
-  bar.className = 'cloud-bar ' + (state||'');
-  bar.textContent = text;
-  bar.style.display = text ? '' : 'none';
-  if(btn) btn.style.display = 'none';
+  bar.textContent = text || '';
+  bar.style.color = state==='ok' ? '#4ade80' : state==='error' ? '#f87171' : state==='pending' ? '#fbbf24' : 'rgba(255,255,255,.35)';
 }
 
 function saveData(toast=true) {
@@ -2143,9 +2278,11 @@ let cloudSyncTimer = null;
 function onFirebaseAuth(user) {
   const badge = document.getElementById('user-badge');
   const loginBtn = document.getElementById('btn-login');
+  const signoutBtn = document.getElementById('btn-signout');
   if (user) {
     badge.style.display = 'flex';
     loginBtn.style.display = 'none';
+    if (signoutBtn) signoutBtn.style.display = '';
     document.getElementById('user-email').textContent = user.displayName || user.email;
     const av = document.getElementById('user-avatar');
     if (user.photoURL) { av.src = user.photoURL; av.style.display = ''; }
@@ -2155,6 +2292,7 @@ function onFirebaseAuth(user) {
   } else {
     badge.style.display = 'none';
     loginBtn.style.display = '';
+    if (signoutBtn) signoutBtn.style.display = 'none';
     setCloudBar('', '');
     checkBackupBanner();
   }
@@ -2307,8 +2445,8 @@ function readFileAsArrayBuffer(file) {
 function toggleUnidad() {
   DB.unidad = (DB.unidad||'jornadas')==='jornadas' ? 'horas' : 'jornadas';
   saveData(false);
-  const utb = document.getElementById('unit-toggle');
-  if(utb) utb.textContent = DB.unidad==='horas' ? '⏱ Ver en jornadas' : '⏱ Ver en horas';
+  const lbl = document.getElementById('unit-toggle-label');
+  if(lbl) lbl.textContent = DB.unidad==='horas' ? 'Ver en jornadas' : 'Ver en horas';
   const th = document.getElementById('th-jornadas');
   if(th) th.textContent = DB.unidad==='horas' ? 'Horas' : 'Jornadas';
   renderKPIs();
@@ -2510,14 +2648,29 @@ function addPerfil() {
 }
 
 // ============================================================
+// SIDEBAR
+// ============================================================
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const tog = document.getElementById('sb-toggle');
+  sb.classList.toggle('collapsed');
+  tog.textContent = sb.classList.contains('collapsed') ? '▶' : '◀';
+  localStorage.setItem('proyak_sidebar', sb.classList.contains('collapsed') ? '1' : '0');
+}
+
+// ============================================================
 // BOOT
 // ============================================================
 document.getElementById('version-label').textContent = 'v' + VERSION + ' · ' + VERSION_DATE;
 loadData();
 renderAll();
-// Show login button — auth state will be set by onAuthStateChanged
+if (localStorage.getItem('proyak_sidebar') === '1') {
+  document.getElementById('sidebar').classList.add('collapsed');
+  document.getElementById('sb-toggle').textContent = '▶';
+}
 const loginBtn = document.getElementById('btn-login');
 if (loginBtn) loginBtn.style.display = '';
 </script>
+</div></div></div> <!-- content-scroll / content-area / app-shell -->
 </body>
 </html>
