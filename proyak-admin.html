@@ -7,28 +7,36 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; background: #111827; color: #f9fafb; font-size: 13px; min-height: 100vh; }
-.header { background: #0d1117; padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 16px; }
-.logo { font-size: 16px; font-weight: 800; color: #60a5fa; }
+.header { background: #0d1117; padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid rgba(255,255,255,.07); }
+.logo { font-size: 15px; font-weight: 800; color: #60a5fa; }
 .sep { flex: 1; }
-.main { padding: 24px; max-width: 1200px; margin: 0 auto; }
-.card { background: #1f2937; border: 1px solid #374151; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
-.kpi-row { display: flex; gap: 12px; margin-bottom: 20px; }
-.kpi { background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 14px 18px; flex: 1; }
-.kpi-val { font-size: 24px; font-weight: 800; color: #60a5fa; }
-.kpi-label { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.main { padding: 28px 24px; max-width: 1000px; margin: 0 auto; }
+.kpi-row { display: flex; gap: 12px; margin-bottom: 24px; }
+.kpi { background: #1f2937; border: 1px solid #374151; border-radius: 10px; padding: 16px 20px; flex: 1; }
+.kpi-val { font-size: 28px; font-weight: 800; color: #60a5fa; line-height: 1; }
+.kpi-label { font-size: 11px; color: #9ca3af; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.card { background: #1f2937; border: 1px solid #374151; border-radius: 10px; overflow: hidden; }
+.card-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #374151; }
+.card-title { font-weight: 700; font-size: 13px; }
 table { width: 100%; border-collapse: collapse; }
-th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; border-bottom: 1px solid #374151; }
-td { padding: 10px 12px; border-bottom: 1px solid #1f2937; font-size: 12px; }
-tr:hover td { background: rgba(255,255,255,.03); }
+th { text-align: left; padding: 10px 18px; font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .06em; background: #161b22; }
+td { padding: 12px 18px; border-top: 1px solid rgba(255,255,255,.04); font-size: 12px; vertical-align: middle; }
+tr:hover td { background: rgba(255,255,255,.02); }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
-.badge-ok { background: rgba(52,211,153,.15); color: #34d399; }
-.btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; }
-.btn-primary { background: #60a5fa; color: #fff; }
-.btn-ghost { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8); }
+.badge-active { background: rgba(52,211,153,.12); color: #34d399; border: 1px solid rgba(52,211,153,.2); }
+.badge-inactive { background: rgba(107,114,128,.1); color: #6b7280; border: 1px solid rgba(107,114,128,.2); }
+.size-bar-bg { background: #374151; border-radius: 3px; height: 4px; width: 80px; display: inline-block; vertical-align: middle; margin-left: 8px; }
+.size-bar { background: #60a5fa; border-radius: 3px; height: 4px; }
+.btn { padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; }
+.btn-ghost { background: rgba(255,255,255,.07); color: rgba(255,255,255,.7); }
+.btn-ghost:hover { background: rgba(255,255,255,.12); }
 #login-screen { display: flex; align-items: center; justify-content: center; min-height: 80vh; flex-direction: column; gap: 16px; }
 #admin-screen { display: none; }
+.btn-primary { background: #60a5fa; color: #fff; }
 .user-info { font-size: 12px; color: #9ca3af; display: flex; align-items: center; gap: 8px; }
 .user-info img { border-radius: 50%; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: #374151; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #9ca3af; flex-shrink: 0; }
+.empty { padding: 40px; text-align: center; color: #6b7280; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -36,8 +44,8 @@ tr:hover td { background: rgba(255,255,255,.03); }
   <div class="logo">Proyak Admin</div>
   <div class="sep"></div>
   <div class="user-info" id="user-info" style="display:none">
-    <img id="admin-avatar" width="24" height="24">
-    <span id="admin-email"></span>
+    <img id="admin-avatar" width="24" height="24" style="border-radius:50%">
+    <span id="admin-email" style="color:#f9fafb"></span>
     <button class="btn btn-ghost" onclick="doSignOut()">Salir</button>
   </div>
 </div>
@@ -53,26 +61,24 @@ tr:hover td { background: rgba(255,255,255,.03); }
 
   <div id="admin-screen">
     <div class="kpi-row">
-      <div class="kpi"><div class="kpi-val" id="k-users">-</div><div class="kpi-label">Usuarios registrados</div></div>
-      <div class="kpi"><div class="kpi-val" id="k-active">-</div><div class="kpi-label">Activos últimos 7 días</div></div>
-      <div class="kpi"><div class="kpi-val" id="k-projects">-</div><div class="kpi-label">Proyectos totales</div></div>
-      <div class="kpi"><div class="kpi-val" id="k-preventa">-</div><div class="kpi-label">Prospectos totales</div></div>
+      <div class="kpi"><div class="kpi-val" id="k-users">-</div><div class="kpi-label">Usuarios</div></div>
+      <div class="kpi"><div class="kpi-val" id="k-active">-</div><div class="kpi-label">Activos 7 días</div></div>
+      <div class="kpi"><div class="kpi-val" id="k-size">-</div><div class="kpi-label">Datos totales</div></div>
     </div>
 
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div style="font-weight:700">Usuarios</div>
+      <div class="card-header">
+        <div class="card-title">Usuarios registrados</div>
         <button class="btn btn-ghost" onclick="loadUsers()">↻ Actualizar</button>
       </div>
       <table>
         <thead>
           <tr>
             <th>Usuario</th>
-            <th>Workspace</th>
-            <th>Proyectos</th>
-            <th>Prospectos</th>
+            <th>Último login</th>
             <th>Último guardado</th>
-            <th></th>
+            <th>Datos</th>
+            <th>Estado</th>
           </tr>
         </thead>
         <tbody id="users-table"></tbody>
@@ -84,9 +90,8 @@ tr:hover td { background: rgba(255,255,255,.03); }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
-// ADMIN UIDs — add your UID here after first login (check browser console)
 const ADMIN_UIDS = ['El6MTxcd3AcCgTkkBzsv5tSbWR83'];
 
 const firebaseConfig = {
@@ -109,56 +114,88 @@ window.doSignIn = () => signInWithPopup(auth, provider).catch(e => {
 });
 window.doSignOut = () => signOut(auth);
 
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if (diff < 60) return 'Ahora mismo';
+  if (diff < 3600) return `Hace ${Math.floor(diff/60)} min`;
+  if (diff < 86400) return `Hace ${Math.floor(diff/3600)} h`;
+  if (diff < 86400*2) return 'Ayer';
+  return d.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit', year:'2-digit'});
+}
+
+function fmtSize(bytes) {
+  if (!bytes) return '—';
+  if (bytes < 1024) return bytes + ' B';
+  return (bytes / 1024).toFixed(1) + ' KB';
+}
+
+function initials(name) {
+  if (!name || name === '—') return '?';
+  return name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+}
+
 window.loadUsers = async function() {
   const tbody = document.getElementById('users-table');
-  tbody.innerHTML = '<tr><td colspan="6" style="color:#9ca3af;padding:20px">Cargando...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="5" class="empty">Cargando...</td></tr>';
 
   try {
-    const usersSnap = await getDocs(collection(db, 'users'));
-
-    const rows = [];
-    let totalProjects = 0, totalPreventa = 0, activeCount = 0;
+    const snap = await getDocs(collection(db, 'users'));
     const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000);
+    const rows = [];
+    let activeCount = 0, totalSize = 0;
 
-    for (const userDoc of usersSnap.docs) {
-      const uid = userDoc.id;
-      const d = userDoc.data();
-      const projects = d.projectCount || 0;
-      const preventa = d.preventaCount || 0;
-      const lastSaved = d.lastSaved ? new Date(d.lastSaved) : null;
-      const isActive = lastSaved && lastSaved > sevenDaysAgo;
-      totalProjects += projects;
-      totalPreventa += preventa;
+    for (const d of snap.docs) {
+      const p = d.data();
+      const lastLogin = p.lastLogin ? new Date(p.lastLogin) : null;
+      const lastSaved = p.lastSaved ? new Date(p.lastSaved) : null;
+      const isActive = lastLogin && lastLogin > sevenDaysAgo;
       if (isActive) activeCount++;
-      rows.push({ uid, name: d.displayName||'—', email: d.email||'—', workspace: d.workspace||'—', projects, preventa, lastSaved, isActive });
+      totalSize += p.dataSize || 0;
+      rows.push({ name: p.displayName||'—', email: p.email||'—', lastLogin, lastSaved, dataSize: p.dataSize||0, isActive });
     }
+
+    rows.sort((a, b) => (b.lastLogin||0) - (a.lastLogin||0));
 
     document.getElementById('k-users').textContent = rows.length;
     document.getElementById('k-active').textContent = activeCount;
-    document.getElementById('k-projects').textContent = totalProjects;
-    document.getElementById('k-preventa').textContent = totalPreventa;
+    document.getElementById('k-size').textContent = fmtSize(totalSize);
+
+    const maxSize = Math.max(...rows.map(r => r.dataSize), 1);
 
     tbody.innerHTML = rows.length === 0
-      ? '<tr><td colspan="6" style="color:#9ca3af;padding:20px">Sin usuarios todavía — los datos aparecen tras el primer guardado en nube de cada usuario</td></tr>'
+      ? '<tr><td colspan="5" class="empty">Sin usuarios todavía — aparecen tras el primer login en la app</td></tr>'
       : rows.map(r => `
         <tr>
-          <td><div style="font-weight:600">${r.name}</div><div style="font-size:10px;color:#6b7280">${r.email}</div></td>
-          <td style="font-weight:600">${r.workspace}</td>
-          <td>${r.projects}</td>
-          <td>${r.preventa}</td>
-          <td>${r.isActive ? '<span class="badge badge-ok">Activo</span> ' : ''}${r.lastSaved ? r.lastSaved.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—'}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="avatar">${initials(r.name)}</div>
+              <div>
+                <div style="font-weight:600;color:#f9fafb">${r.name}</div>
+                <div style="font-size:11px;color:#6b7280">${r.email}</div>
+              </div>
+            </div>
+          </td>
+          <td style="color:#d1d5db">${fmtDate(r.lastLogin?.toISOString())}</td>
+          <td style="color:#9ca3af">${fmtDate(r.lastSaved?.toISOString())}</td>
+          <td>
+            <span style="color:#d1d5db;font-size:11px">${fmtSize(r.dataSize)}</span>
+            <div class="size-bar-bg"><div class="size-bar" style="width:${Math.round(r.dataSize/maxSize*100)}%"></div></div>
+          </td>
+          <td><span class="badge ${r.isActive ? 'badge-active' : 'badge-inactive'}">${r.isActive ? 'Activo' : 'Inactivo'}</span></td>
         </tr>`).join('');
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="6" style="color:#f87171">Error: ${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color:#f87171">Error: ${e.message}</td></tr>`;
   }
 };
 
 onAuthStateChanged(auth, user => {
   if (user) {
-    console.log('Tu UID de admin:', user.uid);
     if (ADMIN_UIDS.length > 0 && !ADMIN_UIDS.includes(user.uid)) {
       signOut(auth);
-      document.getElementById('login-error').textContent = 'Acceso denegado — no eres administrador';
+      document.getElementById('login-error').textContent = 'Acceso denegado';
       document.getElementById('login-error').style.display = '';
       return;
     }

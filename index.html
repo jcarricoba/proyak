@@ -2276,6 +2276,12 @@ function onFirebaseAuth(user) {
     if (user.photoURL) { av.src = user.photoURL; av.style.display = ''; }
     else av.style.display = 'none';
     checkBackupBanner();
+    // Registrar último login
+    if (window._fb) window._fb.saveProfile(user.uid, {
+      displayName: user.displayName || '',
+      email: user.email || '',
+      lastLogin: new Date().toISOString()
+    });
     pullFromCloud(true);
   } else {
     badge.style.display = 'none';
@@ -2315,8 +2321,7 @@ async function pushToCloud() {
       email: window._fbUser.email || '',
       workspace: DB.workspace || 'Mi Área',
       lastSaved: payload.lastSaved || null,
-      projectCount: (DB.projects||[]).length,
-      preventaCount: (DB.preventa||[]).length
+      dataSize: JSON.stringify(payload).length
     });
     const hora = new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
     setCloudBar('ok', '☁ Guardado ' + hora);
