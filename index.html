@@ -2288,6 +2288,7 @@ function onFirebaseAuth(user) {
     if (user.photoURL) { av.src = user.photoURL; av.style.display = ''; }
     else av.style.display = 'none';
     setCloudBar('pending', '☁ Sincronizando...');
+    checkBackupBanner();
     pullFromCloud(true);
   } else {
     badge.style.display = 'none';
