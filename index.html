@@ -24,8 +24,14 @@ html, body { height: 100%; overflow: hidden; }
 .app-shell { display: flex; height: 100vh; }
 
 /* ===== SIDEBAR ===== */
-.sidebar { width: 220px; min-width: 220px; background: #0d1117; display: flex; flex-direction: column; transition: width .2s ease; overflow: hidden; border-right: 1px solid rgba(255,255,255,.07); position: relative; z-index: 100; flex-shrink: 0; }
-.sidebar.collapsed { width: 52px; }
+.sidebar { width: 180px; min-width: 180px; background: #0d1117; display: flex; flex-direction: column; transition: width .2s ease; overflow: hidden; border-right: 1px solid rgba(255,255,255,.07); position: relative; z-index: 100; flex-shrink: 0; }
+.sidebar.collapsed { width: 48px; }
+.sidebar.collapsed .sb-nav { padding: 4px 4px; }
+.sidebar.collapsed .sb-item { justify-content: center; padding: 9px 6px; }
+.sidebar.collapsed .sb-item svg { width: 22px; height: 22px; }
+.sidebar.collapsed .sb-bottom { padding: 8px 4px; }
+.sidebar.collapsed .sb-bottom .sb-item { justify-content: center; padding: 9px 6px; }
+.sidebar.collapsed .sb-bottom .sb-item svg { width: 22px; height: 22px; }
 .sb-toggle { position: absolute; right: -11px; top: 22px; width: 22px; height: 22px; background: #0d1117; border: 1px solid rgba(255,255,255,.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: rgba(255,255,255,.5); font-size: 10px; z-index: 101; transition: all .15s; user-select: none; }
 .sb-toggle:hover { color: #fff; border-color: rgba(255,255,255,.35); }
 .sb-logo { display: flex; align-items: center; gap: 10px; padding: 14px 12px 8px; white-space: nowrap; overflow: hidden; flex-shrink: 0; }
@@ -522,7 +528,7 @@ a { color: var(--primary); }
   <!-- Backup banner -->
   <div id="backup-banner" style="display:none;background:#78350f;color:#fef3c7;padding:8px 20px;font-size:12px;flex-shrink:0;align-items:center;gap:10px;">
     <span>⚠</span>
-    <span>Tus datos solo existen en este navegador. Haz una copia de seguridad para no perderlos.</span>
+    <span>Sin sesión: los datos se pierden al recargar. Inicia sesión para guardar en la nube o exporta un JSON antes de salir.</span>
     <button onclick="exportData()" style="background:#f59e0b;color:#1c1917;border:none;border-radius:5px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">⬇ Exportar ahora</button>
     <button onclick="fbSignIn()" style="background:transparent;color:#fbbf24;border:1px solid #fbbf24;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer">🔑 Iniciar sesión</button>
     <span style="flex:1"></span>
@@ -1166,6 +1172,7 @@ window._fb = { auth, db,
   signIn: () => signInWithPopup(auth, provider),
   signOut: () => signOut(auth),
   saveUser: (uid, data) => setDoc(doc(db, 'users', uid, 'workspace', 'data'), data),
+  saveProfile: (uid, profile) => setDoc(doc(db, 'users', uid), profile, { merge: true }),
   loadUser: async (uid) => { const s = await getDoc(doc(db, 'users', uid, 'workspace', 'data')); return s.exists() ? s.data() : null; },
   getAllUsers: async () => { const s = await getDocs(collection(db, 'users')); return s.docs.map(d => ({uid: d.id, ...d.data()})); }
 };
@@ -1297,30 +1304,11 @@ const SAMPLE_PREVENTA = [
 // PERSISTENCE
 // ============================================================
 function loadData() {
-  try {
-    const raw = localStorage.getItem('proyak_v1');
-    if (raw) {
-      DB = JSON.parse(raw);
-      if (!DB.projects) DB.projects = [];
-      if (!DB.preventa) DB.preventa = [];
-      if (!DB.perfiles) DB.perfiles = [{id:'p1',nombre:'Consultor Senior',tarifaHora:95},{id:'p2',nombre:'Consultor',tarifaHora:70},{id:'p3',nombre:'Junior',tarifaHora:45}];
-      if (!DB.unidad) DB.unidad = 'jornadas';
-      if (!DB.horasPorJornada) DB.horasPorJornada = 8;
-    } else {
-      DB.projects = [];
-      DB.preventa = [];
-      // No llamar saveData aquí — lastSaved queda undefined (epoch)
-      // para que pullFromCloud detecte correctamente que la nube es más reciente
-    }
-  } catch(e) {
-    DB.projects = [];
-    DB.preventa = [];
-  }
+  // Siempre arrancar vacío — los datos vienen de la nube al iniciar sesión.
+  // Sin sesión, la app funciona en memoria (se pierde al recargar).
+  DB.projects = [];
+  DB.preventa = [];
   document.getElementById('ws-name').value = DB.workspace || 'Mi Área';
-  if(DB.lastSaved) {
-    const el = document.getElementById('last-saved');
-    if(el) el.textContent = 'Guardado ' + new Date(DB.lastSaved).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
-  }
 }
 
 function setCloudBar(state, text) {
@@ -2287,7 +2275,6 @@ function onFirebaseAuth(user) {
     const av = document.getElementById('user-avatar');
     if (user.photoURL) { av.src = user.photoURL; av.style.display = ''; }
     else av.style.display = 'none';
-    setCloudBar('pending', '☁ Sincronizando...');
     checkBackupBanner();
     pullFromCloud(true);
   } else {
@@ -2295,6 +2282,12 @@ function onFirebaseAuth(user) {
     loginBtn.style.display = '';
     if (signoutBtn) signoutBtn.style.display = 'none';
     setCloudBar('', '');
+    // Limpiar datos al cerrar sesión o al entrar sin sesión
+    localStorage.removeItem('proyak_v1');
+    DB.projects = [];
+    DB.preventa = [];
+    DB.lastSaved = undefined;
+    renderAll();
     checkBackupBanner();
   }
 }
@@ -2317,6 +2310,14 @@ async function pushToCloud() {
       Object.entries(DB).filter(([k]) => !['cloudKey','cloudBin'].includes(k))
     );
     await window._fb.saveUser(window._fbUser.uid, payload);
+    await window._fb.saveProfile(window._fbUser.uid, {
+      displayName: window._fbUser.displayName || '',
+      email: window._fbUser.email || '',
+      workspace: DB.workspace || 'Mi Área',
+      lastSaved: payload.lastSaved || null,
+      projectCount: (DB.projects||[]).length,
+      preventaCount: (DB.preventa||[]).length
+    });
     const hora = new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
     setCloudBar('ok', '☁ Guardado ' + hora);
   } catch(e) {
@@ -2342,19 +2343,27 @@ async function pullFromCloud(silent = false) {
   if (!window._fbUser || !window._fb) { if (!silent) showToast('⚠ Inicia sesión primero'); return; }
   try {
     const remote = await window._fb.loadUser(window._fbUser.uid);
-    if (!remote) { if (!silent) showToast('☁ Sin datos en la nube todavía'); return; }
+    const hora = new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+    if (!remote) {
+      if (!silent) showToast('☁ Sin datos en la nube todavía');
+      setCloudBar('ok', '☁ Sin datos en nube');
+      return;
+    }
     const localDate = DB.lastSaved ? new Date(DB.lastSaved) : new Date(0);
     const remoteDate = remote.lastSaved ? new Date(remote.lastSaved) : new Date(0);
     if (remoteDate > localDate) {
       DB = { ...remote, appId: 'proyak' };
       localStorage.setItem('proyak_v1', JSON.stringify(DB));
       renderAll();
-      showToast('☁ Datos actualizados desde la nube');
+      if (!silent) showToast('☁ Datos actualizados desde la nube');
+      setCloudBar('ok', '☁ Guardado ' + hora);
     } else {
       if (!silent) showToast('✅ Ya tienes la versión más reciente');
+      setCloudBar('ok', '☁ Guardado ' + hora);
     }
   } catch(e) {
     if (!silent) showToast('❌ Error al conectar: ' + e.message);
+    setCloudBar('error', '⚠ Error nube');
   }
 }
 

@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.uid == 'El6MTxcd3AcCgTkkBzsv5tSbWR83';
+    }
+
+    match /users/{uid} {
+      // Admin puede leer todos los perfiles; cada usuario el suyo
+      allow read: if isAdmin() || request.auth.uid == uid;
+      // Solo el propio usuario escribe su perfil (pushToCloud lo hace)
+      allow write: if request.auth.uid == uid;
+
+      match /workspace/data {
+        allow read, write: if request.auth.uid == uid;
+        allow read: if isAdmin();
+      }
+    }
+  }
+}

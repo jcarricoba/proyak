@@ -72,6 +72,7 @@ tr:hover td { background: rgba(255,255,255,.03); }
             <th>Proyectos</th>
             <th>Prospectos</th>
             <th>Último guardado</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="users-table"></tbody>
@@ -110,7 +111,7 @@ window.doSignOut = () => signOut(auth);
 
 window.loadUsers = async function() {
   const tbody = document.getElementById('users-table');
-  tbody.innerHTML = '<tr><td colspan="5" style="color:#9ca3af;padding:20px">Cargando...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="6" style="color:#9ca3af;padding:20px">Cargando...</td></tr>';
 
   try {
     const usersSnap = await getDocs(collection(db, 'users'));
@@ -121,16 +122,15 @@ window.loadUsers = async function() {
 
     for (const userDoc of usersSnap.docs) {
       const uid = userDoc.id;
-      const dataDoc = await getDoc(doc(db, 'users', uid, 'workspace', 'data'));
-      const data = dataDoc.exists() ? dataDoc.data() : {};
-      const projects = (data.projects||[]).length;
-      const preventa = (data.preventa||[]).length;
-      const lastSaved = data.lastSaved ? new Date(data.lastSaved) : null;
+      const d = userDoc.data();
+      const projects = d.projectCount || 0;
+      const preventa = d.preventaCount || 0;
+      const lastSaved = d.lastSaved ? new Date(d.lastSaved) : null;
       const isActive = lastSaved && lastSaved > sevenDaysAgo;
       totalProjects += projects;
       totalPreventa += preventa;
       if (isActive) activeCount++;
-      rows.push({ uid, workspace: data.workspace||'—', projects, preventa, lastSaved, isActive });
+      rows.push({ uid, name: d.displayName||'—', email: d.email||'—', workspace: d.workspace||'—', projects, preventa, lastSaved, isActive });
     }
 
     document.getElementById('k-users').textContent = rows.length;
@@ -139,17 +139,17 @@ window.loadUsers = async function() {
     document.getElementById('k-preventa').textContent = totalPreventa;
 
     tbody.innerHTML = rows.length === 0
-      ? '<tr><td colspan="5" style="color:#9ca3af;padding:20px">Sin usuarios todavía</td></tr>'
+      ? '<tr><td colspan="6" style="color:#9ca3af;padding:20px">Sin usuarios todavía — los datos aparecen tras el primer guardado en nube de cada usuario</td></tr>'
       : rows.map(r => `
         <tr>
-          <td style="font-family:monospace;font-size:10px;color:#6b7280">${r.uid.slice(0,12)}...</td>
+          <td><div style="font-weight:600">${r.name}</div><div style="font-size:10px;color:#6b7280">${r.email}</div></td>
           <td style="font-weight:600">${r.workspace}</td>
           <td>${r.projects}</td>
           <td>${r.preventa}</td>
           <td>${r.isActive ? '<span class="badge badge-ok">Activo</span> ' : ''}${r.lastSaved ? r.lastSaved.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—'}</td>
         </tr>`).join('');
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="5" style="color:#f87171">Error: ${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="color:#f87171">Error: ${e.message}</td></tr>`;
   }
 };
 
