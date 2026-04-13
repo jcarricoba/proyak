@@ -83,6 +83,10 @@ html, body { height: 100%; overflow: hidden; }
 .kpi-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 .kpi-value { font-size: 22px; font-weight: 800; color: var(--text); line-height: 1; }
 .kpi-sub { font-size: 11px; color: var(--light); margin-top: 1px; }
+.agg-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 8px; margin-top: -4px; }
+.agg-kpi-row { grid-template-columns: repeat(4,1fr); }
+.sem-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; margin-bottom: 2px; }
+.sem-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
 
 /* ===== FILTER BAR ===== */
 .filter-bar { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 10px 14px; margin-bottom: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -655,6 +659,9 @@ a { color: var(--primary); }
   <div id="view-portfolio">
     <!-- KPIs -->
     <div class="kpi-row" id="kpi-area"></div>
+    <!-- KPIs agregados -->
+    <div class="agg-section-label">Análisis</div>
+    <div class="kpi-row agg-kpi-row" id="agg-kpi-area"></div>
 
     <!-- FILTERS -->
     <div class="filter-bar">
@@ -1616,6 +1623,67 @@ function renderKPIs() {
   // Update unit toggle button
   const utb = document.getElementById('unit-toggle');
   if(utb) utb.textContent = unidad==='horas'?'⏱ Horas':'⏱ Jornadas';
+  renderAggKPIs();
+}
+
+function renderAggKPIs() {
+  const el = document.getElementById('agg-kpi-area');
+  if(!el) return;
+  const active = DB.projects.filter(p => p.estado !== 'archivado');
+
+  // 1. Desviación media de jornadas (proyectos con estimación)
+  const withEst = active.filter(p => (+p.jornadasEst||0) > 0);
+  let desvMedia = null;
+  if(withEst.length > 0) {
+    const sum = withEst.reduce((s,p) => s + ((+p.jornadasCons||0) - (+p.jornadasEst)) / (+p.jornadasEst) * 100, 0);
+    desvMedia = sum / withEst.length;
+  }
+  const desvStr   = desvMedia === null ? '–' : (desvMedia >= 0 ? '+' : '') + desvMedia.toFixed(1) + '%';
+  const desvColor = desvMedia === null ? 'inherit' : desvMedia > 15 ? 'var(--danger)' : desvMedia > 0 ? 'var(--warning)' : 'var(--success)';
+  const desvSub   = desvMedia === null ? 'Sin datos de estimación' : desvMedia <= 0 ? 'Dentro del estimado' : 'Por encima del estimado';
+
+  // 2. Estado del portfolio (semáforo)
+  const nVerde    = active.filter(p => p.estado === 'verde').length;
+  const nAmarillo = active.filter(p => p.estado === 'amarillo').length;
+  const nNaranja  = active.filter(p => p.estado === 'naranja').length;
+  const nRojo     = active.filter(p => p.estado === 'rojo').length;
+  const semHtml = active.length === 0
+    ? '<div style="color:var(--muted);font-size:12px;margin-top:4px">Sin proyectos activos</div>'
+    : `<div class="sem-row">
+        ${nVerde    > 0 ? `<span class="sem-badge" style="background:rgba(74,222,128,.15);color:var(--s-verde)">🟢 ${nVerde}</span>` : ''}
+        ${nAmarillo > 0 ? `<span class="sem-badge" style="background:rgba(251,191,36,.15);color:var(--s-amarillo)">🟡 ${nAmarillo}</span>` : ''}
+        ${nNaranja  > 0 ? `<span class="sem-badge" style="background:rgba(251,146,60,.15);color:var(--s-naranja)">🟠 ${nNaranja}</span>` : ''}
+        ${nRojo     > 0 ? `<span class="sem-badge" style="background:rgba(248,113,113,.15);color:var(--s-rojo)">🔴 ${nRojo}</span>` : ''}
+      </div>`;
+
+  // 3. Win rate preventa
+  const ganados  = DB.preventa.filter(p => p.estado === 'ganado').length;
+  const perdidos = DB.preventa.filter(p => p.estado === 'perdido').length;
+  const cerrados = ganados + perdidos;
+  const winRate  = cerrados > 0 ? Math.round(ganados / cerrados * 100) : null;
+  const winStr   = winRate === null ? '–' : winRate + '%';
+  const winColor = winRate === null ? 'inherit' : winRate >= 60 ? 'var(--success)' : winRate >= 40 ? 'var(--warning)' : 'var(--danger)';
+  const winSub   = cerrados > 0 ? `${ganados} ganados · ${perdidos} perdidos` : 'Sin oportunidades cerradas';
+
+  // 4. Margen medio (proyectos con ingreso estimado)
+  const withIng = active.filter(p => (+p.ingresoEstimado||0) > 0);
+  let margenMedio = null;
+  if(withIng.length > 0) {
+    const sum = withIng.reduce((s,p) => {
+      const ing = +p.ingresoEstimado, coste = calcCosteEstimado(p);
+      return s + (ing - coste) / ing * 100;
+    }, 0);
+    margenMedio = sum / withIng.length;
+  }
+  const margenStr   = margenMedio === null ? '–' : Math.round(margenMedio) + '%';
+  const margenColor = margenMedio === null ? 'inherit' : margenMedio >= 30 ? 'var(--success)' : margenMedio >= 15 ? 'var(--warning)' : 'var(--danger)';
+  const margenSub   = withIng.length > 0 ? `Sobre ${withIng.length} proy. con precio` : 'Sin precios registrados';
+
+  el.innerHTML = `
+    <div class="kpi"><div class="kpi-icon">📏</div><div><div class="kpi-label">Desviación media</div><div class="kpi-value" style="color:${desvColor}">${desvStr}</div><div class="kpi-sub">${desvSub}</div></div></div>
+    <div class="kpi"><div class="kpi-icon">🚦</div><div style="width:100%"><div class="kpi-label">Estado del portfolio</div>${semHtml}<div class="kpi-sub">${active.length} proyectos activos</div></div></div>
+    <div class="kpi"><div class="kpi-icon">🎯</div><div><div class="kpi-label">Win rate preventa</div><div class="kpi-value" style="color:${winColor}">${winStr}</div><div class="kpi-sub">${winSub}</div></div></div>
+    <div class="kpi"><div class="kpi-icon">📊</div><div><div class="kpi-label">Margen medio</div><div class="kpi-value" style="color:${margenColor}">${margenStr}</div><div class="kpi-sub">${margenSub}</div></div></div>`;
 }
 
 // ============================================================
