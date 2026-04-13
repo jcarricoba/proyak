@@ -1422,7 +1422,7 @@ a { color: var(--primary); }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1440,22 +1440,12 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 window._fb = { auth, db,
-  signIn: () => signInWithRedirect(auth, provider),
+  signIn: () => signInWithPopup(auth, provider),
   signOut: () => signOut(auth),
   saveUser: (uid, data) => setDoc(doc(db, 'users', uid, 'workspace', 'data'), data),
   loadUser: async (uid) => { const s = await getDoc(doc(db, 'users', uid, 'workspace', 'data')); return s.exists() ? s.data() : null; }
 };
 
-getRedirectResult(auth).then(result => {
-  if (result?.user) {
-    // redirect sign-in completed successfully, onAuthStateChanged will handle it
-  }
-}).catch(err => {
-  if (err?.code && err.code !== 'auth/no-auth-event') {
-    console.error('Firebase redirect error:', err.code, err.message);
-    if (typeof showToast === 'function') showToast('❌ Error de login: ' + (err.code || err.message));
-  }
-});
 
 onAuthStateChanged(auth, user => {
   window._fbUser = user || null;
