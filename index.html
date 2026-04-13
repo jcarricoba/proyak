@@ -268,6 +268,35 @@ a { color: var(--primary); }
 .desv-ok { color: var(--success); font-weight: 700; }
 .hist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .hist-header h2 { font-size: 15px; font-weight: 800; }
+.hist-subtabs { display: flex; gap: 2px; margin-bottom: 14px; background: var(--surface); border-radius: 8px; padding: 4px; box-shadow: var(--shadow); width: fit-content; }
+.hist-subtab { padding: 6px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted); border: none; background: none; transition: all .15s; }
+.hist-subtab:hover { color: var(--text); }
+.hist-subtab.active { background: var(--bg); color: var(--text); box-shadow: var(--shadow); }
+.lecc-filter-bar { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 10px 14px; margin-bottom: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.lecc-filter-bar select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; background: var(--bg); color: var(--text); outline: none; }
+.lecc-filter-bar select:focus { border-color: var(--primary); }
+.lecc-card { background: var(--surface); border-radius: 8px; box-shadow: var(--shadow); padding: 14px 16px; margin-bottom: 10px; border-left: 3px solid var(--border); }
+.lecc-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.lecc-project { font-weight: 700; font-size: 13px; }
+.lecc-meta { font-size: 11px; color: var(--muted); }
+.lecc-text { font-size: 12px; color: var(--text); line-height: 1.6; white-space: pre-wrap; cursor: text; }
+.lecc-text em { color: var(--light); font-style: italic; }
+.lecc-edit-area { width: 100%; min-height: 80px; font-size: 12px; padding: 6px 8px; border: 1px solid var(--primary); border-radius: 5px; background: var(--bg); color: var(--text); font-family: inherit; resize: vertical; outline: none; line-height: 1.6; }
+
+/* ===== RIESGOS ===== */
+.riesgo-badge { display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(251,146,60,.18); color: var(--orange); margin-left: 4px; vertical-align: middle; flex-shrink: 0; }
+.riesgo-table { width: 100%; border-collapse: collapse; }
+.riesgo-table th { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: 6px 8px; border-bottom: 2px solid var(--border); text-align: left; }
+.riesgo-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); font-size: 12px; vertical-align: middle; }
+.riesgo-table tr:last-child td { border-bottom: none; }
+.riesgo-table tbody tr:hover td { background: rgba(255,255,255,.03); }
+.riesgo-table .ri { text-align: center; }
+.prob-alta, .imp-alto { color: var(--danger); font-weight: 700; }
+.prob-media, .imp-medio { color: var(--warning); font-weight: 700; }
+.prob-baja, .imp-bajo { color: var(--success); font-weight: 700; }
+.riesgo-estado-abierto { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; background: rgba(251,146,60,.15); color: var(--orange); }
+.riesgo-estado-cerrado { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; background: rgba(107,114,128,.15); color: var(--muted); }
+.riesgo-form { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 12px; }
 
 /* ===== CLOUD BADGE ===== */
 .cloud-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
@@ -724,23 +753,44 @@ a { color: var(--primary); }
       <h2>📦 Histórico de proyectos</h2>
       <span id="cloud-status-badge" class="cloud-badge cloud-off">☁ Sin nube</span>
     </div>
-    <div class="hist-kpi-row" id="hist-kpi-area"></div>
-    <div class="hist-table-wrap">
-      <table class="hist-table">
-        <thead>
-          <tr>
-            <th>Cliente · Proyecto</th>
-            <th>Herramienta</th>
-            <th>Resp.</th>
-            <th>Fecha cierre</th>
-            <th>J. Estimadas</th>
-            <th>J. Reales</th>
-            <th>Desviación</th>
-            <th>Lecciones</th>
-          </tr>
-        </thead>
-        <tbody id="hist-tbody"></tbody>
-      </table>
+    <div class="hist-subtabs">
+      <button class="hist-subtab active" id="hst-proyectos" onclick="switchHistSubtab('proyectos')">📦 Proyectos</button>
+      <button class="hist-subtab" id="hst-lecciones" onclick="switchHistSubtab('lecciones')">💡 Lecciones aprendidas</button>
+    </div>
+
+    <!-- Sub-vista: Proyectos -->
+    <div id="hist-view-proyectos">
+      <div class="hist-kpi-row" id="hist-kpi-area"></div>
+      <div class="hist-table-wrap">
+        <table class="hist-table">
+          <thead>
+            <tr>
+              <th>Cliente · Proyecto</th>
+              <th>Herramienta</th>
+              <th>Resp.</th>
+              <th>Fecha cierre</th>
+              <th>J. Estimadas</th>
+              <th>J. Reales</th>
+              <th>Desviación</th>
+              <th>Lecciones</th>
+            </tr>
+          </thead>
+          <tbody id="hist-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sub-vista: Lecciones aprendidas -->
+    <div id="hist-view-lecciones" class="hidden">
+      <div class="lecc-filter-bar">
+        <select id="lecc-fil-area" onchange="renderLecciones()">
+          <option value="">Todas las áreas</option>
+        </select>
+        <select id="lecc-fil-herr" onchange="renderLecciones()">
+          <option value="">Todas las herramientas</option>
+        </select>
+      </div>
+      <div id="lecc-list"></div>
     </div>
   </div>
 
@@ -759,6 +809,7 @@ a { color: var(--primary); }
       <div class="modal-tab" onclick="showModalTab('mt-stakeholders',this)">👥 Stakeholders</div>
       <div class="modal-tab" onclick="showModalTab('mt-contexto',this)">📝 Contexto</div>
       <div class="modal-tab" onclick="showModalTab('mt-docs',this)">📁 Documentos</div>
+      <div class="modal-tab" id="tab-riesgos-modal" onclick="showModalTab('mt-riesgos',this)">⚠ Riesgos</div>
     </div>
     <div class="modal-body">
 
@@ -948,6 +999,57 @@ a { color: var(--primary); }
             <p>📁 Conecta la carpeta del proyecto para ver sus archivos locales</p>
             <button class="btn btn-secondary btn-sm" onclick="pickProjectFolder()">Seleccionar carpeta local</button>
           </div>
+        </div>
+      </div>
+
+      <!-- RIESGOS -->
+      <div id="mt-riesgos" class="hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <span style="font-size:13px;font-weight:700">Registro de riesgos</span>
+          <button class="btn btn-secondary btn-sm" onclick="showRiesgoForm()">＋ Añadir riesgo</button>
+        </div>
+        <div id="riesgo-form" class="riesgo-form hidden">
+          <div class="form-grid" style="margin-bottom:10px">
+            <div class="form-group full">
+              <label class="form-label">Descripción</label>
+              <input class="form-input" id="rf-desc" placeholder="Qué puede salir mal...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Probabilidad</label>
+              <select class="form-select" id="rf-prob">
+                <option value="alta">Alta</option>
+                <option value="media" selected>Media</option>
+                <option value="baja">Baja</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Impacto</label>
+              <select class="form-select" id="rf-imp">
+                <option value="alto">Alto</option>
+                <option value="medio" selected>Medio</option>
+                <option value="bajo">Bajo</option>
+              </select>
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Acción prevista</label>
+              <input class="form-input" id="rf-accion" placeholder="Mitigación o plan de contingencia...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Estado</label>
+              <select class="form-select" id="rf-estado">
+                <option value="abierto">Abierto</option>
+                <option value="cerrado">Cerrado</option>
+              </select>
+            </div>
+          </div>
+          <input type="hidden" id="rf-id">
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary btn-sm" onclick="saveRiesgo()">Guardar</button>
+            <button class="btn btn-secondary btn-sm" onclick="cancelRiesgoForm()">Cancelar</button>
+          </div>
+        </div>
+        <div id="riesgo-list">
+          <div class="empty-state" style="padding:32px 0"><div class="es-icon">🛡</div><p>Sin riesgos registrados</p></div>
         </div>
       </div>
 
@@ -1386,6 +1488,7 @@ let editingPreventaId = null;
 let tempStakeholders = [];
 let tempDocs = [];
 let tempLineas = [];          // presupuesto lines being edited
+let tempRiesgos = [];         // riesgos being edited
 let expandedRows = new Set();
 let fsHandle = null; // File System API handle
 
@@ -1777,11 +1880,13 @@ function renderTable() {
 
     const alerts = getProjectAlerts(p);
     const alertHtml = alerts.length ? `<span class="alert-icon ${alerts[0].nivel==='critica'?'alert-critica':'alert-media'}">⚠<span class="alert-tip">${alerts.map(a=>(a.nivel==='critica'?'🔴 ':'🟡 ')+escH(a.msg)).join('<br>')}</span></span>` : '';
+    const openRisks = (p.riesgos||[]).filter(r=>r.estado==='abierto').length;
+    const riskHtml = openRisks > 0 ? `<span class="riesgo-badge" title="${openRisks} riesgo(s) abierto(s)" onclick="event.stopPropagation();openProjectModal('${p.id}',4)">🔺 ${openRisks}</span>` : '';
 
     tr.innerHTML = `
       <td><span class="expand-icon">${isExpanded?'▼':'▶'}</span></td>
       <td><span class="status-dot ${est.dot}" title="${est.label}" onclick="openStatusMenu(event,'${p.id}')"></span></td>
-      <td><div class="proj-name">${alertHtml}${escH(p.cliente)} · ${escH(p.nombre)}</div></td>
+      <td><div class="proj-name">${alertHtml}${escH(p.cliente)} · ${escH(p.nombre)}${riskHtml}</div></td>
       <td><span class="area-tag">${escH(p.area||'–')}</span></td>
       <td><span class="herr-tag">${escH(p.herramienta||'–')}</span></td>
       <td class="date-range">${dateRange}</td>
@@ -1948,6 +2053,7 @@ function openProjectModal(id, tabIndex=0) {
   tempStakeholders = JSON.parse(JSON.stringify(p?.stakeholders || []));
   tempDocs = JSON.parse(JSON.stringify(p?.documentos || []));
   tempLineas = JSON.parse(JSON.stringify(p?.lineasPresupuesto || []));
+  tempRiesgos = JSON.parse(JSON.stringify(p?.riesgos || []));
   updatePresupInline();
 
   renderStakeholders();
@@ -1956,8 +2062,12 @@ function openProjectModal(id, tabIndex=0) {
 
   // Show correct tab
   const tabs = document.querySelectorAll('.modal-tab');
-  const panels = ['mt-ficha','mt-stakeholders','mt-contexto','mt-docs'];
+  const panels = ['mt-ficha','mt-stakeholders','mt-contexto','mt-docs','mt-riesgos'];
   tabs.forEach((t,i)=>{ t.classList.toggle('active',i===tabIndex); document.getElementById(panels[i]).classList.toggle('hidden',i!==tabIndex); });
+  if(tabIndex===4) renderRiesgos();
+  // Update riesgos tab label with open count
+  const openCount = tempRiesgos.filter(r=>r.estado==='abierto').length;
+  document.getElementById('tab-riesgos-modal').textContent = openCount > 0 ? `⚠ Riesgos (${openCount})` : '⚠ Riesgos';
 
   document.getElementById('proj-modal').classList.remove('hidden');
 }
@@ -2001,7 +2111,8 @@ function saveProject() {
     lineasPresupuesto: tempLineas,
     presupuestoTotal: calcPresupTotal(tempLineas),
     stakeholders: tempStakeholders,
-    documentos: tempDocs
+    documentos: tempDocs,
+    riesgos: tempRiesgos
   };
 
   // Update catalogs
@@ -2328,10 +2439,11 @@ function showTab(tab) {
 }
 
 function showModalTab(panelId, el) {
-  ['mt-ficha','mt-stakeholders','mt-contexto','mt-docs'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  ['mt-ficha','mt-stakeholders','mt-contexto','mt-docs','mt-riesgos'].forEach(id=>document.getElementById(id).classList.add('hidden'));
   document.getElementById(panelId).classList.remove('hidden');
   document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
+  if(panelId==='mt-riesgos') renderRiesgos();
 }
 
 function clearFilters() {
@@ -2526,6 +2638,168 @@ function editLecciones(id, spanEl) {
   };
   ta.addEventListener('blur', save);
   ta.addEventListener('keydown', e => { if(e.key==='Escape') { ta.removeEventListener('blur',save); renderHistorico(); } });
+}
+
+let _histSubtab = 'proyectos';
+
+function switchHistSubtab(tab) {
+  _histSubtab = tab;
+  document.getElementById('hst-proyectos').classList.toggle('active', tab==='proyectos');
+  document.getElementById('hst-lecciones').classList.toggle('active', tab==='lecciones');
+  document.getElementById('hist-view-proyectos').classList.toggle('hidden', tab!=='proyectos');
+  document.getElementById('hist-view-lecciones').classList.toggle('hidden', tab!=='lecciones');
+  if(tab==='lecciones') renderLecciones();
+}
+
+function renderLecciones() {
+  const arch = DB.projects.filter(p=>p.estado==='archivado');
+
+  // Populate filter selects
+  const areas = [...new Set(arch.map(p=>p.area).filter(Boolean))].sort();
+  const herrs = [...new Set(arch.map(p=>p.herramienta).filter(Boolean))].sort();
+  const areaEl = document.getElementById('lecc-fil-area');
+  const herrEl = document.getElementById('lecc-fil-herr');
+  const prevArea = areaEl.value;
+  const prevHerr = herrEl.value;
+  areaEl.innerHTML = '<option value="">Todas las áreas</option>' + areas.map(a=>`<option value="${escH(a)}">${escH(a)}</option>`).join('');
+  herrEl.innerHTML = '<option value="">Todas las herramientas</option>' + herrs.map(h=>`<option value="${escH(h)}">${escH(h)}</option>`).join('');
+  areaEl.value = prevArea;
+  herrEl.value = prevHerr;
+
+  const filArea = areaEl.value;
+  const filHerr = herrEl.value;
+
+  let filtered = arch;
+  if(filArea) filtered = filtered.filter(p=>p.area===filArea);
+  if(filHerr) filtered = filtered.filter(p=>p.herramienta===filHerr);
+  filtered = filtered.sort((a,b)=>(b.fechaCierre||'').localeCompare(a.fechaCierre||''));
+
+  const list = document.getElementById('lecc-list');
+  if(!filtered.length) {
+    list.innerHTML = `<div class="empty-state"><div class="es-icon">💡</div><p>No hay lecciones aprendidas para los filtros seleccionados.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(p=>{
+    const txt = p.leccionesAprendidas||'';
+    return `<div class="lecc-card" id="lecc-card-${p.id}">
+      <div class="lecc-card-header">
+        <span class="lecc-project">${escH(p.cliente)} · ${escH(p.nombre)}</span>
+        ${p.herramienta?`<span class="herr-tag">${escH(p.herramienta)}</span>`:''}
+        ${p.area?`<span class="area-tag">${escH(p.area)}</span>`:''}
+        <span class="lecc-meta">${fmtDate(p.fechaCierre)||'—'}</span>
+        <span style="margin-left:auto;color:var(--light);font-size:12px;cursor:pointer" onclick="editLeccionesCard('${p.id}')" title="Editar">✏</span>
+      </div>
+      <div class="lecc-text" id="lecc-text-${p.id}" onclick="editLeccionesCard('${p.id}')" title="Clic para editar">${txt ? escH(txt) : '<em>Sin notas de cierre</em>'}</div>
+    </div>`;
+  }).join('');
+}
+
+function editLeccionesCard(id) {
+  const p = DB.projects.find(p=>p.id===id);
+  if(!p) return;
+  const textEl = document.getElementById('lecc-text-'+id);
+  if(!textEl || textEl.tagName==='TEXTAREA') return;
+  const ta = document.createElement('textarea');
+  ta.className = 'lecc-edit-area';
+  ta.value = p.leccionesAprendidas || '';
+  textEl.replaceWith(ta);
+  ta.focus();
+  const save = () => {
+    p.leccionesAprendidas = ta.value.trim();
+    saveData(false);
+    renderLecciones();
+  };
+  ta.addEventListener('blur', save);
+  ta.addEventListener('keydown', e => { if(e.key==='Escape') { ta.removeEventListener('blur',save); renderLecciones(); } });
+}
+
+// ============================================================
+// RIESGOS
+// ============================================================
+function renderRiesgos() {
+  const list = document.getElementById('riesgo-list');
+  if(!list) return;
+  const openCount = tempRiesgos.filter(r=>r.estado==='abierto').length;
+  document.getElementById('tab-riesgos-modal').textContent = openCount > 0 ? `⚠ Riesgos (${openCount})` : '⚠ Riesgos';
+  if(!tempRiesgos.length) {
+    list.innerHTML = `<div class="empty-state" style="padding:32px 0"><div class="es-icon">🛡</div><p>Sin riesgos registrados</p></div>`;
+    return;
+  }
+  list.innerHTML = `<table class="riesgo-table">
+    <thead><tr>
+      <th>Descripción</th>
+      <th class="ri">Prob.</th>
+      <th class="ri">Impacto</th>
+      <th>Acción prevista</th>
+      <th class="ri">Estado</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${tempRiesgos.map(r=>`<tr>
+      <td style="max-width:180px">${escH(r.descripcion)}</td>
+      <td class="ri"><span class="prob-${r.probabilidad}">${r.probabilidad}</span></td>
+      <td class="ri"><span class="imp-${r.impacto}">${r.impacto}</span></td>
+      <td style="max-width:180px;color:var(--muted)">${escH(r.accion||'—')}</td>
+      <td class="ri"><span class="riesgo-estado-${r.estado}">${r.estado}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" style="padding:3px 8px;margin-right:3px" onclick="editRiesgo('${r.id}')">✏</button>
+        <button class="btn btn-secondary btn-sm" style="padding:3px 8px" onclick="deleteRiesgo('${r.id}')">🗑</button>
+      </td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function showRiesgoForm(id) {
+  document.getElementById('riesgo-form').classList.remove('hidden');
+  document.getElementById('rf-id').value = id || '';
+  if(id) {
+    const r = tempRiesgos.find(r=>r.id===id);
+    if(!r) return;
+    document.getElementById('rf-desc').value = r.descripcion;
+    document.getElementById('rf-prob').value = r.probabilidad;
+    document.getElementById('rf-imp').value = r.impacto;
+    document.getElementById('rf-accion').value = r.accion||'';
+    document.getElementById('rf-estado').value = r.estado;
+  } else {
+    document.getElementById('rf-desc').value = '';
+    document.getElementById('rf-prob').value = 'media';
+    document.getElementById('rf-imp').value = 'medio';
+    document.getElementById('rf-accion').value = '';
+    document.getElementById('rf-estado').value = 'abierto';
+  }
+  document.getElementById('rf-desc').focus();
+}
+
+function cancelRiesgoForm() {
+  document.getElementById('riesgo-form').classList.add('hidden');
+}
+
+function saveRiesgo() {
+  const desc = document.getElementById('rf-desc').value.trim();
+  if(!desc) { showToast('⚠ La descripción es obligatoria'); return; }
+  const id = document.getElementById('rf-id').value || uuid();
+  const riesgo = {
+    id,
+    descripcion: desc,
+    probabilidad: document.getElementById('rf-prob').value,
+    impacto: document.getElementById('rf-imp').value,
+    accion: document.getElementById('rf-accion').value.trim(),
+    estado: document.getElementById('rf-estado').value
+  };
+  const idx = tempRiesgos.findIndex(r=>r.id===id);
+  if(idx>=0) tempRiesgos[idx] = riesgo;
+  else tempRiesgos.push(riesgo);
+  cancelRiesgoForm();
+  renderRiesgos();
+}
+
+function editRiesgo(id) {
+  showRiesgoForm(id);
+}
+
+function deleteRiesgo(id) {
+  tempRiesgos = tempRiesgos.filter(r=>r.id!==id);
+  renderRiesgos();
 }
 
 // ============================================================
