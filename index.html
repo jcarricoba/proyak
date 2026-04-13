@@ -523,7 +523,6 @@ a { color: var(--primary); }
   .hist-kpi-row { grid-template-columns: repeat(2,1fr); }
 }
 </style>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -1349,14 +1348,13 @@ a { color: var(--primary); }
         <div class="help-step"><div class="help-num">3</div><div>Elige el <strong>Estado</strong> inicial, el <strong>Area</strong> y el <strong>Responsable</strong>.</div></div>
         <div class="help-step"><div class="help-num">4</div><div>Introduce las <strong>Jornadas estimadas</strong> y las fechas de inicio y fin.</div></div>
         <div class="help-step"><div class="help-num">5</div><div>Opcional: define el presupuesto por perfiles con el boton <strong>Editar presupuesto</strong>, y añade URLs de seguimiento, oferta o plan.</div></div>
-        <div class="help-step"><div class="help-num">6</div><div>Si usas partes de trabajo, anota el <strong>Codigo de proyecto</strong> (ej. PRO-0145-01) para vincularlo automaticamente.</div></div>
-        <div class="help-step"><div class="help-num">7</div><div>Guarda. El proyecto aparece en el Portfolio y los KPIs se actualizan al momento.</div></div>
+        <div class="help-step"><div class="help-num">6</div><div>Guarda. El proyecto aparece en el Portfolio y los KPIs se actualizan al momento.</div></div>
       </div>
 
       <div class="help-section">
         <h3>Mantener un proyecto</h3>
         <div class="help-step"><div class="help-num">1</div><div>Haz clic en cualquier fila del portfolio para <strong>expandirla</strong> y ver el detalle completo.</div></div>
-        <div class="help-step"><div class="help-num">2</div><div>Pulsa el icono de edicion para actualizar el <strong>% de progreso</strong> y las <strong>jornadas consumidas</strong> manualmente, o importa los partes para que se calculen solos.</div></div>
+        <div class="help-step"><div class="help-num">2</div><div>Pulsa el icono de edicion para actualizar el <strong>% de progreso</strong> y las <strong>jornadas consumidas</strong>.</div></div>
         <div class="help-step"><div class="help-num">3</div><div>Cambia el <strong>estado</strong> directamente haciendo clic en el punto de color de la fila.</div></div>
         <div class="help-step"><div class="help-num">4</div><div>Cuando el proyecto termine, usa <strong>Archivar</strong> para moverlo al Historico con las jornadas reales y lecciones aprendidas.</div></div>
       </div>
@@ -1372,15 +1370,6 @@ a { color: var(--primary); }
       </div>
 
       <div class="help-section">
-        <h3>Partes de trabajo</h3>
-        <div class="help-step"><div class="help-num">1</div><div>Exporta el Excel de partes desde la app interna de gestion de horas.</div></div>
-        <div class="help-step"><div class="help-num">2</div><div>Ve a la pestana <strong>Partes</strong> y pulsa <strong>Importar Excel</strong>.</div></div>
-        <div class="help-step"><div class="help-num">3</div><div>En la ficha de cada proyecto, escribe el <strong>Codigo de proyecto</strong> que aparece como nombre de hoja en el Excel (ej. PRO-0145-01).</div></div>
-        <div class="help-step"><div class="help-num">4</div><div>Las horas consumidas del portfolio se actualizan automaticamente desde los partes. Aparece el icono 📋 en la columna de jornadas cuando el dato viene de partes.</div></div>
-        <div class="help-step"><div class="help-num">5</div><div>Los partes se mantienen en memoria: hay que reimportarlos si recargas la pagina.</div></div>
-      </div>
-
-      <div class="help-section">
         <h3>Preguntas frecuentes</h3>
 
         <details class="help-faq" open>
@@ -1390,7 +1379,7 @@ a { color: var(--primary); }
 
         <details class="help-faq" open>
           <summary>Donde se guardan los datos?</summary>
-          <p>En el <strong>localStorage</strong> de tu navegador. Los datos no salen de tu equipo salvo que configures la sincronizacion en la nube (JSONBin) desde Ajustes. Exporta regularmente en JSON como copia de seguridad.</p>
+          <p>En el <strong>localStorage</strong> de tu navegador. Los datos no salen de tu equipo salvo que actives la sincronizacion en la nube con <strong>Google</strong> desde Ajustes. Exporta regularmente en JSON como copia de seguridad.</p>
         </details>
 
         <details class="help-faq" open>
@@ -1405,7 +1394,7 @@ a { color: var(--primary); }
 
         <details class="help-faq" open>
           <summary>Que pasa si borro el navegador o cambio de equipo?</summary>
-          <p>Perderas los datos si no has exportado ni activado la nube. Exporta el JSON periodicamente o configura JSONBin en Ajustes para tener una copia accesible desde cualquier sitio.</p>
+          <p>Perderas los datos si no has exportado ni activado la nube. Exporta el JSON periodicamente o inicia sesion con Google en Ajustes para sincronizar automaticamente desde cualquier dispositivo.</p>
         </details>
 
         <details class="help-faq" open>
@@ -1836,8 +1825,8 @@ function renderTable() {
 
   let projs = DB.projects.filter(p => {
     if(fArea && p.area !== fArea) return false;
-    if(fEst) { if(p.estado !== fEst) return false; }
-    else { if(p.estado === 'archivado') return false; }
+    if(fEst && fEst !== '__todos__') { if(p.estado !== fEst) return false; }
+    else if(!fEst) { if(p.estado === 'archivado') return false; }
     if(fResp && p.responsable !== fResp) return false;
     if(q && !(p.cliente+p.nombre+p.area+p.herramienta+p.responsable).toLowerCase().includes(q)) return false;
     return true;
