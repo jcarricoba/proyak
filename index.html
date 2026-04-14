@@ -1413,7 +1413,7 @@ a { color: var(--primary); }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1430,8 +1430,10 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
+const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+
 window._fb = { auth, db,
-  signIn: () => signInWithPopup(auth, provider),
+  signIn: () => isMobile ? signInWithRedirect(auth, provider) : signInWithPopup(auth, provider),
   signOut: () => signOut(auth),
   saveUser: (uid, data) => setDoc(doc(db, 'users', uid, 'workspace', 'data'), data),
   loadUser: async (uid) => { const s = await getDoc(doc(db, 'users', uid, 'workspace', 'data')); return s.exists() ? s.data() : null; },
@@ -1445,6 +1447,13 @@ onAuthStateChanged(auth, user => {
   window._fbUser = user || null;
   if (typeof onFirebaseAuth === 'function') onFirebaseAuth(user);
 });
+
+// Handle redirect result on mobile after Google login
+if (isMobile) {
+  getRedirectResult(auth).then(result => {
+    if (result?.additionalUserInfo?.isNewUser) location.reload();
+  }).catch(() => {});
+}
 </script>
 
 <script>
@@ -2929,8 +2938,11 @@ async function fbSignIn() {
   if (!window._fb) { showToast('⚠ Firebase no disponible'); return; }
   try {
     const result = await window._fb.signIn();
+    // On mobile, signInWithRedirect navigates away; result is null here
     if (result?.additionalUserInfo?.isNewUser) location.reload();
-  } catch(e) { showToast('❌ Error al iniciar sesión'); }
+  } catch(e) {
+    if (e?.code !== 'auth/popup-closed-by-user') showToast('❌ Error al iniciar sesión');
+  }
 }
 
 async function fbSignOut() {
