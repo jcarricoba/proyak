@@ -170,10 +170,10 @@ tr:hover .action-icons { opacity: 1; }
 .modal-title { font-size: 16px; font-weight: 800; }
 .modal-close { width: 28px; height: 28px; border-radius: 6px; border: none; background: var(--bg); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--muted); }
 .modal-close:hover { background: var(--border); }
-.modal-tabs { display: flex; padding: 0 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--header2); }
+.modal-tabs { display: flex; padding: 0 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--header2); overflow-x: auto; }
 .modal-tab { padding: 10px 14px; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .modal-tab.active { color: var(--primary); border-color: var(--primary); }
-.modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+.modal-body { padding: 20px; overflow-y: auto; flex: 1; min-height: 0; }
 .modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; flex-shrink: 0; }
 
 /* ===== FORMS ===== */
@@ -511,7 +511,11 @@ a { color: var(--primary); }
   /* Modals: full screen on mobile */
   .overlay { padding: 0; align-items: flex-end; }
   .modal { max-width: 100%; max-height: 94vh; border-radius: 16px 16px 0 0; }
-  .modal-body { padding: 14px; }
+  .modal-body { padding: 14px; -webkit-overflow-scrolling: touch; }
+  .modal-tab { padding: 10px 10px; white-space: nowrap; }
+
+  /* Expand row: fix hidden by td:nth-child(1) rule */
+  .proj-table .expand-row > td { display: block !important; }
 
   /* Analisis layout */
   .anal-layout { grid-template-columns: 1fr; }
@@ -522,6 +526,14 @@ a { color: var(--primary); }
 
   /* Hist KPI */
   .hist-kpi-row { grid-template-columns: repeat(2,1fr); }
+}
+
+/* Landscape mobile: viewport height is small, give modal more room */
+@media (max-height: 500px) {
+  .modal { max-height: 98vh; }
+  .modal-header { padding: 10px 16px; }
+  .modal-footer { padding: 8px 16px; }
+  .modal-body { padding: 10px 14px; }
 }
 </style>
 </head>
