@@ -2934,7 +2934,7 @@ function updateSettingsUserSection(user) {
 async function fbSignIn() {
   if (!window._fb) { showToast('⚠ Firebase no disponible'); return; }
   // signInWithRedirect navigates away; result is handled by getRedirectResult on page load
-  window._fb.signIn().catch(() => showToast('❌ Error al iniciar sesión'));
+  window._fb.signIn().catch(e => showToast('❌ ' + (e?.code || e?.message || 'Error al iniciar sesión')));
 }
 
 async function fbSignOut() {
