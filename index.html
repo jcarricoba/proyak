@@ -1942,11 +1942,11 @@ function renderTable() {
     const dispCons = unidad==='horas' ? (jCons*hpj2).toFixed(0)+'h' : (jCons>0?jCons.toFixed(1):'–');
     // URL badges
     const urlLinks = [
-      p.seguimiento && `<a href="${escH(p.seguimiento)}" target="_blank" onclick="event.stopPropagation()" class="url-badge" title="Seguimiento">🔗</a>`,
-      p.oferta      && `<a href="${escH(p.oferta)}"      target="_blank" onclick="event.stopPropagation()" class="url-badge" title="Oferta">📋</a>`,
-      p.plan        && `<a href="${escH(p.plan)}"        target="_blank" onclick="event.stopPropagation()" class="url-badge" title="Plan/Gantt">📊</a>`,
-      p.excel       && `<a href="${escH(p.excel)}"       target="_blank" onclick="event.stopPropagation()" class="url-badge" title="Excel">📈</a>`,
-      p.finanedi    && `<a href="${escH(p.finanedi)}"    target="_blank" onclick="event.stopPropagation()" class="url-badge" title="FinanEDI">🧾</a>`
+      p.seguimiento && `<a href="${safeUrl(p.seguimiento)}" target="_blank" onclick="event.stopPropagation()" class="url-badge" title="Seguimiento">🔗</a>`,
+      p.oferta      && `<a href="${safeUrl(p.oferta)}"      target="_blank" onclick="event.stopPropagation()" class="url-badge" title="Oferta">📋</a>`,
+      p.plan        && `<a href="${safeUrl(p.plan)}"        target="_blank" onclick="event.stopPropagation()" class="url-badge" title="Plan/Gantt">📊</a>`,
+      p.excel       && `<a href="${safeUrl(p.excel)}"       target="_blank" onclick="event.stopPropagation()" class="url-badge" title="Excel">📈</a>`,
+      p.finanedi    && `<a href="${safeUrl(p.finanedi)}"    target="_blank" onclick="event.stopPropagation()" class="url-badge" title="FinanEDI">🧾</a>`
     ].filter(Boolean).join('');
 
     const alerts = getProjectAlerts(p);
@@ -1990,7 +1990,7 @@ function renderTable() {
         : '<span style="font-size:12px;color:var(--light)">Sin contactos registrados</span>';
 
       const docsHtml = p.documentos && p.documentos.length
-        ? p.documentos.map(d=>`<span class="stakeholder-pill">${DOC_ICONS[d.tipo]||'📎'} ${d.url?`<a href="${escH(d.url)}" target="_blank" onclick="event.stopPropagation()">${escH(d.nombre)}</a>`:escH(d.nombre)}</span>`).join('')
+        ? p.documentos.map(d=>`<span class="stakeholder-pill">${DOC_ICONS[d.tipo]||'📎'} ${d.url?`<a href="${safeUrl(d.url)}" target="_blank" onclick="event.stopPropagation()">${escH(d.nombre)}</a>`:escH(d.nombre)}</span>`).join('')
         : '<span style="font-size:12px;color:var(--light)">Sin documentos</span>';
 
       // Link buttons para URLs configuradas
@@ -2003,7 +2003,7 @@ function renderTable() {
       ].filter(Boolean);
 
       const urlHtml = urlBtns.length
-        ? urlBtns.map(b=>`<a href="${escH(b.url)}" target="_blank" onclick="event.stopPropagation()" class="btn btn-secondary btn-sm" style="text-decoration:none;margin:2px">${b.label}</a>`).join('')
+        ? urlBtns.map(b=>`<a href="${safeUrl(b.url)}" target="_blank" onclick="event.stopPropagation()" class="btn btn-secondary btn-sm" style="text-decoration:none;margin:2px">${b.label}</a>`).join('')
         : '<span style="font-size:12px;color:var(--light)">Sin URLs configuradas</span>';
 
       // Estimación económica
@@ -2265,7 +2265,7 @@ function renderDocs() {
   list.innerHTML = tempDocs.length ? tempDocs.map(d=>`
     <div class="doc-item">
       <span class="doc-icon">${DOC_ICONS[d.tipo]||'📎'}</span>
-      <div class="doc-name">${d.url?`<a href="${escH(d.url)}" target="_blank">${escH(d.nombre)}</a>`:escH(d.nombre)}</div>
+      <div class="doc-name">${d.url?`<a href="${safeUrl(d.url)}" target="_blank">${escH(d.nombre)}</a>`:escH(d.nombre)}</div>
       <span class="doc-type">${d.tipo||''}</span>
       <button class="icon-btn" onclick="removeDoc('${d.id}')" style="color:var(--danger)">✕</button>
     </div>`).join('') : '<div style="font-size:12px;color:var(--light);padding:4px">Sin documentos añadidos.</div>';
@@ -2600,6 +2600,11 @@ function dismissBackupBanner() {
 // ============================================================
 function uuid() { return 'xxxx-xxxx-xxxx'.replace(/x/g,()=>Math.random().toString(16)[2]); }
 function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// T3 — Bloquear URLs javascript: y otros esquemas peligrosos en href
+function safeUrl(u) {
+  const s = String(u||'').trim();
+  return /^(https?:|mailto:)/i.test(s) ? s : '#';
+}
 function fmtDate(d) { if(!d) return ''; try{ const[y,m,day]=d.split('-');return`${day}/${m}/${y.substring(2)}`; }catch{return d;} }
 
 // ============================================================
