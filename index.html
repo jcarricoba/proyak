@@ -1584,11 +1584,58 @@ const SAMPLE_PREVENTA = [
 // PERSISTENCE
 // ============================================================
 function loadData() {
-  // Siempre arrancar vacío — los datos vienen de la nube al iniciar sesión.
-  // Sin sesión, la app funciona en memoria (se pierde al recargar).
-  DB.projects = [];
-  DB.preventa = [];
+  // Cargar desde localStorage si existe; la nube sobreescribirá al iniciar sesión.
+  try {
+    const raw = localStorage.getItem('proyak_v1');
+    if (raw) {
+      const parsed = sanitizeDB(JSON.parse(raw));
+      DB.projects  = parsed.projects;
+      DB.preventa  = parsed.preventa;
+      DB.workspace = parsed.workspace  || DB.workspace;
+      DB.lastSaved = parsed.lastSaved  || undefined;
+    } else {
+      DB.projects = [];
+      DB.preventa = [];
+    }
+  } catch(e) {
+    console.warn('proyak: error leyendo localStorage, arrancando vacío.', e);
+    DB.projects = [];
+    DB.preventa = [];
+  }
   document.getElementById('ws-name').value = DB.workspace || 'Mi Área';
+}
+
+// T2 — Validar estructura e IDs al importar o cargar datos locales
+function sanitizeDB(data) {
+  const ID_RE = /^[a-zA-Z0-9_-]+$/;
+  function safeId(id) { return ID_RE.test(id) ? id : uuid(); }
+  function safeNum(v) { const n = parseFloat(v); return isNaN(n) ? 0 : n; }
+
+  data.projects = Array.isArray(data.projects) ? data.projects : [];
+  data.preventa  = Array.isArray(data.preventa)  ? data.preventa  : [];
+
+  data.projects = data.projects.map(p => {
+    p.id = safeId(p.id);
+    (p.riesgos         || []).forEach(r => { r.id = safeId(r.id); });
+    (p.comentarios     || []).forEach(c => { c.id = safeId(c.id); });
+    (p.stakeholders    || []).forEach(s => { s.id = safeId(s.id); });
+    (p.documentos      || []).forEach(d => { d.id = safeId(d.id); });
+    (p.lineasPresupuesto || []).forEach(l => {
+      l.id = safeId(l.id);
+      l.importe = safeNum(l.importe);
+    });
+    if (p.presupuestoTotal !== undefined) p.presupuestoTotal = safeNum(p.presupuestoTotal);
+    if (p.facturado       !== undefined) p.facturado         = safeNum(p.facturado);
+    if (p.coste           !== undefined) p.coste             = safeNum(p.coste);
+    return p;
+  });
+
+  data.preventa = data.preventa.map(pv => {
+    pv.id = safeId(pv.id);
+    return pv;
+  });
+
+  return data;
 }
 
 function setCloudBar(state, text) {
@@ -1646,7 +1693,7 @@ function handleImport(e) {
   const reader = new FileReader();
   reader.onload = async ev => {
     try {
-      const data = JSON.parse(ev.target.result);
+      const data = sanitizeDB(JSON.parse(ev.target.result));
       if(!data.projects) { showToast('❌ Fichero no válido'); return; }
 
       if(data.appId && data.appId !== 'proyak') showToast('⚠ JSON de otra app — cargando datos de todos modos');
@@ -2911,11 +2958,7 @@ function onFirebaseAuth(user) {
     loginBtn.style.display = '';
     if (signoutBtn) signoutBtn.style.display = 'none';
     setCloudBar('', '');
-    // Limpiar datos al cerrar sesión o al entrar sin sesión
-    localStorage.removeItem('proyak_v1');
-    DB.projects = [];
-    DB.preventa = [];
-    DB.lastSaved = undefined;
+    // Sin sesión: solo ajustar UI. Los datos locales se conservan.
     renderAll();
     checkBackupBanner();
   }
