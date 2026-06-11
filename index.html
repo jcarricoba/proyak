@@ -1665,7 +1665,25 @@ async function saveToFile() {
     const writable = await fsHandle.createWritable();
     await writable.write(JSON.stringify(DB, null, 2));
     await writable.close();
-  } catch(e) { /* silent */ }
+  } catch(e) {
+    // T4 — Errores visibles al guardar en archivo
+    if (e.name === 'NotAllowedError') {
+      try {
+        const perm = await fsHandle.requestPermission({ mode: 'readwrite' });
+        if (perm === 'granted') {
+          const writable = await fsHandle.createWritable();
+          await writable.write(JSON.stringify(DB, null, 2));
+          await writable.close();
+          setCloudBar('ok', '\u{1F4C1} Archivo guardado');
+          return;
+        }
+      } catch(_) {}
+      setCloudBar('error', '\u26A0 Permiso denegado \u2014 archivo no guardado');
+    } else {
+      setCloudBar('error', '\u26A0 No se pudo escribir el archivo');
+    }
+    console.error('saveToFile:', e);
+  }
 }
 
 function exportData() {
