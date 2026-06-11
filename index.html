@@ -1468,6 +1468,9 @@ onAuthStateChanged(auth, user => {
 const VERSION = '1.5';
 const VERSION_DATE = '12/04/2026';
 
+// T5 — Flag para desactivar la UI cloud. Poner a true para reactivar Firebase.
+const CLOUD_ENABLED = false;
+
 const ESTADOS = {
   verde:    { label: '🟢 Dentro del plan', dot: 'verde', cls: 'sl-verde' },
   amarillo: { label: '🟡 Planificado',     dot: 'amarillo', cls: 'sl-amarillo' },
@@ -1656,7 +1659,7 @@ function saveData(toast=true) {
   } else {
     setCloudBar('pending', '☁ Sincronizando...');
     clearTimeout(cloudSyncTimer);
-    if (window._fbUser) cloudSyncTimer = setTimeout(pushToCloud, 2500);
+    if (CLOUD_ENABLED && window._fbUser) cloudSyncTimer = setTimeout(pushToCloud, 2500);
   }
 }
 
@@ -2963,6 +2966,7 @@ function deleteRiesgo(id) {
 let cloudSyncTimer = null;
 
 function onFirebaseAuth(user) {
+  if (!CLOUD_ENABLED) return;
   const badge = document.getElementById('user-badge');
   const loginBtn = document.getElementById('btn-login');
   const signoutBtn = document.getElementById('btn-signout');
@@ -3410,7 +3414,23 @@ if (localStorage.getItem('proyak_sidebar') === '1') {
   document.getElementById('sb-toggle').textContent = '▶';
 }
 const loginBtn = document.getElementById('btn-login');
-if (loginBtn) loginBtn.style.display = '';
+if (!CLOUD_ENABLED) {
+  // T5 — Ocultar toda la UI cloud cuando el flag está desactivado
+  ['btn-login','btn-signout','user-badge','cloud-bar',
+   'set-btn-login','set-btn-signout','set-btn-delete-account',
+   'set-user-info','set-no-user'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  // Ocultar sección ☁ Cuenta en Ajustes
+  const cuentaLabel = document.querySelector('#settings-modal .form-label');
+  document.querySelectorAll('#settings-modal .form-group').forEach(fg => {
+    if (fg.querySelector('.form-label')?.textContent?.includes('Cuenta')) fg.style.display = 'none';
+    if (fg.querySelector('.form-label')?.textContent?.includes('sep')) fg.style.display = 'none';
+  });
+} else if (loginBtn) {
+  loginBtn.style.display = '';
+}
 </script>
 </div></div></div> <!-- content-scroll / content-area / app-shell -->
 <!-- ===== BOTTOM NAV (mobile) ===== -->
